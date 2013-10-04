@@ -1,0 +1,107 @@
+{% include 'base.html' %}
+<style>
+        body
+        {
+            font-family: 'Garamond', 'Georgia', serif;
+        }
+</style>
+<body>
+    <h3> the data structure </h3>
+    <p data-bind="text:dat"></p>
+    <h3> the mapping </h3>
+    <p data-bind="text:ko.toJSON(mappedSections)"> </p>
+    <h3>make a survey</h3>
+    <div data-bind="foreach:mappedSections">
+        <div data-bind="visible: viewModel.page() == page()">
+            <div data-bind="text:id"></div>
+            <button data-bind='click: viewModel.prev, visible: viewModel.page() > 1'> prev </button>
+            <button data-bind='click: viewModel.next'> next </button>
+            <div data-bind="foreach:questions">
+                <span data-bind="text: text"></span>
+                <span data-bind="text: typ"></span>
+                <select data-bind="options: options, value:value"></select>
+                <div data-bind="foreach:if_statement">
+                    <span data-bind="text:do_this"></span>
+                    <span data-bind="text: value"></span>
+                    <span data-bind="text: logic"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+
+    var dat = '{{ form_data | safe }}';
+    var form_data = ko.utils.parseJson(dat);
+
+
+
+    function Section(id, typ, order, page, questions)
+    {
+        this.typ = ko.observable(typ);
+        this.id = ko.observable(id);
+        this.order = ko.observable(order);
+        this.page = ko.observable(page);
+        this.questions = ko.observableArray(questions);
+    };
+
+    function Question(id, typ, text, options, value, if_statement)
+    {
+        this.id = ko.observable(id);
+        this.typ = ko.observable(typ);
+        this.text = ko.observable(text);
+        this.options = ko.observableArray(options);
+        this.selected = ko.observable();
+        this.value = ko.observable(value);
+        this.if_statement = ko.observableArray(if_statement);
+    };
+
+    function If_Statement(logic, value, do_this)
+    {
+        this.logic = ko.observable(logic);
+        this.value = ko.observable(value);
+        this.do_this = ko.observable(do_this);
+    };
+
+    var viewModel =
+    {
+        page: ko.observable(1),
+        next: function(){
+            var page = viewModel.page();
+            viewModel.page(page + 1);
+        },
+        prev: function(){
+            var page = viewModel.page();
+            viewModel.page(page - 1);
+        },
+        sections: ko.observableArray([
+            {
+                questions: ko.observableArray([
+                        {
+                            logics: ko.observableArray([
+                            ])
+                        }
+                ])
+            }])
+    };
+
+    var sections = form_data[0].sections;
+    var mappedSections = ko.utils.arrayMap(sections, function(section)
+    {
+        var mappedQuestions = ko.utils.arrayMap(section.questions, function(question)
+       {
+           var mappedLogics = ko.utils.arrayMap(question.if_statement, function(logic)
+           {
+               return new If_Statement(logic.logic, logic.value, logic.do);
+           });
+           return new Question(question._id, question.typ, question.text, question.options, question.value, mappedLogics );
+       });
+       console.log(typeof(section.page));
+       return new Section(section._id, section.typ, section.order, section.page, mappedQuestions);
+    });
+
+    viewModel.sections(mappedSections);
+
+    ko.applyBindings(viewModel);
+
+</script>
+</body>

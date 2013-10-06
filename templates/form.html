@@ -33,7 +33,15 @@
     var dat = '{{ form_data | safe }}';
     var form_data = ko.utils.parseJson(dat);
 
-
+    function ForLoop(obj, times)
+    {
+        var objlist = []
+        for (var i = 0; i < times; i++)
+        {
+            objlist[i] = obj;
+        }
+        return objlist;
+    }
 
     function Section(id, typ, order, page, questions)
     {
@@ -44,7 +52,7 @@
         this.questions = ko.observableArray(questions);
     };
 
-    function Question(id, typ, text, options, value, if_statement)
+    function Question(id, typ, text, options, value, forloop, if_statement)
     {
         this.id = ko.observable(id);
         this.typ = ko.observable(typ);
@@ -53,6 +61,10 @@
         this.selected = ko.observable();
         this.value = ko.observable(value);
         this.if_statement = ko.observableArray(if_statement);
+        if (forloop)
+        {
+            console.log(ForLoop(this, forloop));
+        }
     };
 
     function If_Statement(logic, value, do_this)
@@ -87,18 +99,30 @@
     var sections = form_data[0].sections;
     var mappedSections = ko.utils.arrayMap(sections, function(section)
     {
+       for (var i = 0; i < section.questions.length; i ++)
+       {
+           if (section.questions[i].forloop)
+           {
+               new_questions = []
+               for (var j = 0; j < section.questions[i].forloop; j++)
+               {
+                   new_questions[j] = section.questions[i];
+               }
+               section.questions = new_questions;
+           }
+       }
         var mappedQuestions = ko.utils.arrayMap(section.questions, function(question)
        {
            var mappedLogics = ko.utils.arrayMap(question.if_statement, function(logic)
            {
                return new If_Statement(logic.logic, logic.value, logic.do);
            });
-           return new Question(question._id, question.typ, question.text, question.options, question.value, mappedLogics );
+           return new Question(
+                   question._id, question.typ, question.text,
+                   question.options, question.value, question.forloop, mappedLogics);
        });
-       console.log(typeof(section.page));
        return new Section(section._id, section.typ, section.order, section.page, mappedQuestions);
     });
-
     viewModel.sections(mappedSections);
 
     ko.applyBindings(viewModel);

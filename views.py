@@ -62,6 +62,7 @@ def form():
                                 '_id':'Question2',
                                 'type':'mc',
                                 'text': 'How were you feeling yesterday?',
+                                'forloop': 3,
                                 'options':['','Bad','Neutral', 'Good'],
                                 'value':'',
                                 'if_statement': [

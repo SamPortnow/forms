@@ -12,20 +12,15 @@
     <p data-bind="text:ko.toJSON(mappedSections)"> </p>
     <h3>make a survey</h3>
     <div data-bind="foreach:mappedSections">
-        <div data-bind="visible: viewModel.page() == page()">
+            <div data-bind="visible: viewModel.page() == page()">
             <div data-bind="text:id"></div>
-            <button data-bind='click: viewModel.prev, visible: viewModel.page() > 1'> prev </button>
-            <button data-bind='click: viewModel.next'> next </button>
             <div data-bind="foreach:questions">
                 <span data-bind="text: text"></span>
-                <span data-bind="text: typ"></span>
-                <select data-bind="options: options, value:value"></select>
-                <div data-bind="foreach:if_statement">
-                    <span data-bind="text:do_this"></span>
-                    <span data-bind="text: value"></span>
-                    <span data-bind="text: logic"></span>
-                </div>
+                <select data-bind="options: options, value:value, event: {change: viewModel.goto }"></select>
+                <br>
             </div>
+            <button data-bind='click: viewModel.prev, visible: viewModel.page() > 1'> prev </button>
+            <button data-bind='click: viewModel.next'> next </button>
         </div>
     </div>
 <script>
@@ -50,6 +45,7 @@
         this.order = ko.observable(order);
         this.page = ko.observable(page);
         this.questions = ko.observableArray(questions);
+        this.isVisible = ko.observable();
     };
 
     function Question(id, typ, text, options, value, forloop, if_statement)
@@ -61,10 +57,8 @@
         this.selected = ko.observable();
         this.value = ko.observable(value);
         this.if_statement = ko.observableArray(if_statement);
-        if (forloop)
-        {
-            console.log(ForLoop(this, forloop));
-        }
+        this.isVisible = ko.observable(false);
+
     };
 
     function If_Statement(logic, value, do_this)
@@ -77,6 +71,64 @@
     var viewModel =
     {
         page: ko.observable(1),
+        goto: function()
+        {
+            var val = this.value();
+            for (var i=0; i < this.if_statement().length; i++)
+            {
+                var logic = this.if_statement()[i].logic();
+                if (logic == 'equals')
+                {
+                    if (val == this.if_statement()[i].value())
+                    {
+                        var id = this.if_statement()[i].do_this();
+                        for (var j = 0; j < sections.length; j++)
+                        {
+                            if (sections[j]._id == id)
+                            {
+                                var page = sections[j].page;
+                            }
+                        }
+                        viewModel.page(page);
+                        console.log(viewModel.page());
+                    }
+                }
+
+                if (logic == 'greater than')
+                {
+                    if (val > this.if_statement()[i].value())
+                    {
+                        var id = this.if_statement()[i].do_this();
+                        for (var j = 0; j < sections.length; j++)
+                        {
+                            if (sections[j]._id == id)
+                            {
+                                var page = sections[j].page;
+                            }
+                        }
+                        viewModel.page(page);
+                        console.log(viewModel.page());
+                    }
+                }
+
+                if (logic == 'less than')
+                {
+                    if (val < this.if_statement()[i].value())
+                    {
+                        var id = this.if_statement()[i].do_this();
+                        for (var j = 0; j < sections.length; j++)
+                        {
+                            if (sections[j]._id == id)
+                            {
+                                var page = sections[j].page;
+                            }
+                        }
+                        viewModel.page(page);
+                        console.log(viewModel.page());
+                    }
+                }
+            }
+        },
         next: function(){
             var page = viewModel.page();
             viewModel.page(page + 1);
@@ -99,16 +151,18 @@
     var sections = form_data[0].sections;
     var mappedSections = ko.utils.arrayMap(sections, function(section)
     {
-       for (var i = 0; i < section.questions.length; i ++)
+       // before we map the questions we have to go through and look for
+       // a for loop attrib and add to the questions
+       var len = section.questions.length;
+       for (var i = 0; i < len; i ++)
        {
            if (section.questions[i].forloop)
            {
-               new_questions = []
-               for (var j = 0; j < section.questions[i].forloop; j++)
+               for (var j = 1; j < section.questions[i].forloop + 1; j++)
                {
-                   new_questions[j] = section.questions[i];
+                   section.questions.splice(i + j, 0, section.questions[i]);
                }
-               section.questions = new_questions;
+
            }
        }
         var mappedQuestions = ko.utils.arrayMap(section.questions, function(question)

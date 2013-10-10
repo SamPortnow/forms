@@ -34,19 +34,28 @@ def form():
                                 '_id':'Question1',
                                 'typ':'mc',
                                 'text':'How are you feeling?',
-                                'options':['','Bad', 'Neutral', 'Good', 'Great'],
+                                'options':['','Bad', 'Neutral', 'Good', 'Great', 5],
                                 'value':'',
                                 'if_statement': [
                                         {
-                                            'logic':'greater',
-                                            'value':'10',
+                                            'logic':'equals',
+                                            'value':'Neutral',
                                             'do':'Page2'
                                         },
                                         {
-                                            'logic':'less',
-                                            'value':'10',
+                                            'logic':'equals',
+                                            'value':'Bad',
                                             'do':'Page3'
+                                        },
+
+                                        {
+                                            'logic': 'greater than',
+                                            'value':4,
+                                            'do':'Page3'
+
                                         }
+
+
                                       ]
                             }
                         ],

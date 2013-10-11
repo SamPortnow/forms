@@ -34,7 +34,7 @@ def form():
                                 '_id':'Question1',
                                 'typ':'mc',
                                 'text':'How are you feeling?',
-                                'options':['','Bad', 'Neutral', 'Good', 'Great', 5],
+                                'options':['','Bad', 'Neutral', 'Good', 'Great', 4, 5],
                                 'value':'',
                                 'if_statement': [
                                         {
@@ -53,6 +53,12 @@ def form():
                                             'value':4,
                                             'do':'Page3'
 
+                                        },
+
+                                        {
+                                            'logic':'between',
+                                            'value':[3,5],
+                                            'do': 'Page3',
                                         }
 
 

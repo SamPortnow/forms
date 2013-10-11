@@ -45,7 +45,6 @@
         this.order = ko.observable(order);
         this.page = ko.observable(page);
         this.questions = ko.observableArray(questions);
-        this.isVisible = ko.observable();
     };
 
     function Question(id, typ, text, options, value, forloop, if_statement)
@@ -57,7 +56,6 @@
         this.selected = ko.observable();
         this.value = ko.observable(value);
         this.if_statement = ko.observableArray(if_statement);
-        this.isVisible = ko.observable(false);
 
     };
 
@@ -76,57 +74,8 @@
             var val = this.value();
             for (var i=0; i < this.if_statement().length; i++)
             {
-                var logic = this.if_statement()[i].logic();
-                if (logic == 'equals')
-                {
-                    if (val == this.if_statement()[i].value())
-                    {
-                        var id = this.if_statement()[i].do_this();
-                        for (var j = 0; j < sections.length; j++)
-                        {
-                            if (sections[j]._id == id)
-                            {
-                                var page = sections[j].page;
-                            }
-                        }
-                        viewModel.page(page);
-                        console.log(viewModel.page());
-                    }
-                }
-
-                if (logic == 'greater than')
-                {
-                    if (val > this.if_statement()[i].value())
-                    {
-                        var id = this.if_statement()[i].do_this();
-                        for (var j = 0; j < sections.length; j++)
-                        {
-                            if (sections[j]._id == id)
-                            {
-                                var page = sections[j].page;
-                            }
-                        }
-                        viewModel.page(page);
-                        console.log(viewModel.page());
-                    }
-                }
-
-                if (logic == 'less than')
-                {
-                    if (val < this.if_statement()[i].value())
-                    {
-                        var id = this.if_statement()[i].do_this();
-                        for (var j = 0; j < sections.length; j++)
-                        {
-                            if (sections[j]._id == id)
-                            {
-                                var page = sections[j].page;
-                            }
-                        }
-                        viewModel.page(page);
-                        console.log(viewModel.page());
-                    }
-                }
+                var if_statement = this.if_statement()[i];
+                get_logic(val, if_statement);
             }
         },
         next: function(){
@@ -147,6 +96,73 @@
                 ])
             }])
     };
+
+    function get_logic(val, if_statement)
+    {
+        var logic = if_statement.logic();
+        apply_logic[logic](val, if_statement);
+    }
+
+    var apply_logic =
+    {
+        'equals': function (val, if_statement) {
+                if (val == if_statement.value())
+                    {
+                        var id = if_statement.do_this();
+                        for (var j = 0; j < sections.length; j++)
+                        {
+                            if (sections[j]._id == id)
+                            {
+                                var page = sections[j].page;
+                            }
+                        }
+                        viewModel.page(page);
+                    }},
+        'less than': function (val, if_statement) {
+                if (val < if_statement.value())
+                    {
+                        var id = if_statement.do_this();
+                        for (var j = 0; j < sections.length; j++)
+                        {
+                            if (sections[j]._id == id)
+                            {
+                                var page = sections[j].page;
+                            }
+                        }
+                        viewModel.page(page);
+                    }},
+        'greater than': function (val, if_statement) {
+                if (val == if_statement.value())
+                    {
+                        var id = if_statement.do_this();
+                        for (var j = 0; j < sections.length; j++)
+                        {
+                            if (sections[j]._id == id)
+                            {
+                                var page = sections[j].page;
+                            }
+                        }
+                        viewModel.page(page);
+                    }},
+        'between': function(val, if_statement)
+        {
+            if (val > if_statement.value()[0] && val < if_statement.value()[1])
+            {
+                        var id = if_statement.do_this();
+                        for (var j = 0; j < sections.length; j++)
+                        {
+                            if (sections[j]._id == id)
+                            {
+                                var page = sections[j].page;
+                            }
+                        }
+                        viewModel.page(page);
+            }
+
+        }
+
+    }
+
 
     var sections = form_data[0].sections;
     var mappedSections = ko.utils.arrayMap(sections, function(section)

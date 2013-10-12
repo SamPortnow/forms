@@ -12,7 +12,7 @@
     <p data-bind="text:ko.toJSON(mappedSections)"> </p>
     <h3>make a survey</h3>
     <div data-bind="foreach:mappedSections">
-            <div data-bind="visible: viewModel.page() == page()">
+            <div data-bind="visible: viewModel.page() == page() && visible()">
             <div data-bind="text:id"></div>
             <div data-bind="foreach:questions">
                 <div class="control-group">
@@ -41,13 +41,21 @@
         return objlist;
     }
 
-    function Section(id, type, order, page, questions)
+    function Section(id, type, order, page, visible, questions)
     {
         this.type = ko.observable(type);
         this.id = ko.observable(id);
         this.order = ko.observable(order);
         this.page = ko.observable(page);
         this.questions = ko.observableArray(questions);
+        if (visible != undefined)
+        {
+            this.visible = ko.observable(visible);
+        }
+        else
+        {
+            this.visible = ko.observable(true);
+        }
     };
 
     function Question(id, type, text, options, value, forloop, caption, if_statement)
@@ -63,11 +71,12 @@
 
     };
 
-    function If_Statement(logic, value, do_this)
+    function If_Statement(logic, value, do_this, place)
     {
         this.logic = ko.observable(logic);
         this.value = ko.observable(value);
         this.do_this = ko.observable(do_this);
+        this.place = ko.observable(place);
     };
 
     var stringTemplateSource = function (template) {
@@ -86,16 +95,14 @@
     var templates = {
         textarea: '<textarea data-bind="value:value"></textarea>',
         textfield: '<input type="text" data-bind="value:value" />',
-        select: '<select data-bind="options: options, value: value, optionsCaption: caption, event: {change: viewModel.goto }"></select>',
+        select: '<select data-bind="options: options, value: value, optionsCaption: caption, event: {change: viewModel.goto}"></select>',
         checkbox: '<input type="checkbox" data-bind="checked:value" />'
     };
 
     ko.bindingHandlers.item = {
         init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             var options = ko.utils.unwrapObservable(valueAccessor());
-            console.log(options);
             options.value = ko.observable('');
-            console.log(options.type);
             ko.renderTemplate(templates[options.type()], options, { templateEngine: stringTemplateEngine }, element, 'replaceNode');
         }
     };
@@ -108,8 +115,8 @@
             var val = this.value();
             for (var i=0; i < this.if_statement().length; i++)
             {
-                var if_statement = this.if_statement()[i];
-                get_logic(val, if_statement);
+                var logic = this.if_statement()[i].logic();
+                apply_logic[logic](val, this.if_statement()[i]);
             }
         },
         next: function(){
@@ -131,26 +138,28 @@
             }])
     };
 
-    function get_logic(val, if_statement)
-    {
-        var logic = if_statement.logic();
-        apply_logic[logic](val, if_statement);
-    }
 
     var apply_logic =
     {
         'equals': function (val, if_statement) {
                 if (val == if_statement.value())
                     {
-                        var id = if_statement.do_this();
-                        for (var j = 0; j < sections.length; j++)
+                        var id = if_statement.place();
+                        for (var j = 0; j < mappedSections.length; j++)
                         {
-                            if (sections[j].id == id)
+                            if (mappedSections[j].id() == id)
                             {
-                                var page = sections[j].page;
+                                if (mappedSections[j].visible() == false)
+                                {
+                                    mappedSections[j].visible(true);
+                                }
+                                else
+                                {
+                                    var page = mappedSections[j].page();
+                                    viewModel.page(page);
+                                }
                             }
                         }
-                        viewModel.page(page);
                     }},
         'less than': function (val, if_statement) {
                 if (val < if_statement.value())
@@ -219,13 +228,14 @@
        {
            var mappedLogics = ko.utils.arrayMap(question.if_statement, function(logic)
            {
-               return new If_Statement(logic.logic, logic.value, logic.do);
+               return new If_Statement(logic.logic, logic.value, logic.do, logic.place);
            });
+
            return new Question(
                    question.id, question.type, question.text,
                    question.options, question.value, question.forloop, question.caption, mappedLogics);
        });
-       return new Section(section.id, section.type, section.order, section.page, mappedQuestions);
+       return new Section(section.id, section.type, section.order, section.page, section.visible, mappedQuestions);
     });
     viewModel.sections(mappedSections);
 

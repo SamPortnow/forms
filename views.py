@@ -40,25 +40,29 @@ def form():
                                         {
                                             'logic':'equals',
                                             'value':'Neutral',
-                                            'do':'Page2'
+                                            'do':'page',
+                                            'place':'Page2'
                                         },
                                         {
                                             'logic':'equals',
                                             'value':'Bad',
-                                            'do':'Page3'
+                                            'do':'page',
+                                            'place':'Page3',
                                         },
 
                                         {
                                             'logic': 'greater than',
                                             'value':4,
-                                            'do':'Page3'
+                                            'do':'page',
+                                            'place':'Page3'
 
                                         },
 
                                         {
                                             'logic':'between',
                                             'value':[3,5],
-                                            'do': 'Page3',
+                                            'do':'page',
+                                            'place': 'Page3',
                                         }
 
 
@@ -91,7 +95,44 @@ def form():
                                       ]
                             },
                         ]
-                    }
+                    },
+                {
+                    'type':'section',
+                    'page': 2,
+                    'id':'Section2',
+                    'order':'',
+                    'questions':
+                        [
+                            {
+                                'id':'Question3',
+                                'type':'select',
+                                'text': "Whats up!?",
+                                'options':['Bad', 'Neutral', 'Good'],
+                                'if_statement': [
+                                        {
+                                            'logic':'equals',
+                                            'value':'Neutral',
+                                            'do':'section',
+                                            'place':'Section3',
+                                        }]
+                            }
+                        ],
+                },
+                {
+                    'type':'section',
+                    'page':2,
+                    'id':'Section3',
+                    'visible':False,
+                    'order':'',
+                    'questions':
+                        [
+                            {
+                                'id':'Question4',
+                                'type':'textfield',
+                                'text':'Feel Better!',
+                            }
+                        ]
+                }
             ]
     }]
     form_data = json.dumps(form_data)

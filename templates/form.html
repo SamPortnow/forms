@@ -22,10 +22,10 @@
                     </div>
                 </div>
             </div>
-            <button data-bind='click: viewModel.prev, visible: viewModel.page() > 1'> prev </button>
-            <button data-bind='click: viewModel.next'> next </button>
         </div>
     </div>
+            <button data-bind='click: viewModel.prev, visible: viewModel.page() > 1'> prev </button>
+            <button data-bind='click: viewModel.next'> next </button>
 <script>
 
     var dat = '{{ form_data | safe }}';
@@ -33,7 +33,6 @@
 
     function ForLoop(obj, times)
     {
-        var objlist = []
         for (var i = 0; i < times; i++)
         {
             objlist[i] = obj;
@@ -217,9 +216,12 @@
        {
            if (section.questions[i].forloop)
            {
-               for (var j = 1; j < section.questions[i].forloop + 1; j++)
+               for (var j = 0; j < section.questions[i].forloop; j++)
                {
-                   section.questions.splice(i + j, 0, section.questions[i]);
+                   var question = {};
+                   jQuery.extend(question, section.questions[i]);
+                   question.id = section.questions[i].pre + j;
+                   section.questions.splice(i + j, 1, question);
                }
 
            }

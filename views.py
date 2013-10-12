@@ -34,6 +34,7 @@ def form():
                                 'id':'Question1',
                                 'type':'select',
                                 'text':'How are you feeling?',
+                                'value':'',
                                 'options':['Bad', 'Neutral', 'Good', 'Great', 4, 5],
                                 'caption': 'Choose...',
                                 'if_statement': [
@@ -89,6 +90,8 @@ def form():
                                 'type':'select',
                                 'text': 'How were you feeling yesterday?',
                                 'forloop': 3,
+                                'pre':'posttest',
+                                'value':'',
                                 'options':['Bad','Neutral', 'Good'],
                                 'caption': 'Choose...',
                                 'if_statement': [
@@ -107,6 +110,7 @@ def form():
                                 'id':'Question3',
                                 'type':'select',
                                 'text': "Whats up!?",
+                                'value':'',
                                 'options':['Bad', 'Neutral', 'Good'],
                                 'if_statement': [
                                         {

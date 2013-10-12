@@ -15,9 +15,12 @@
             <div data-bind="visible: viewModel.page() == page()">
             <div data-bind="text:id"></div>
             <div data-bind="foreach:questions">
-                <span data-bind="text: text"></span>
-                <select data-bind="options: options, value:value, event: {change: viewModel.goto }"></select>
-                <br>
+                <div class="control-group">
+                    <label class="control-label" data-bind="text:$data.text, attr:{for:$data.id}"></label>
+                    <div class="controls">
+                        <div data-bind='item:$data, attr:{id:$data.id}'></div>
+                    </div>
+                </div>
             </div>
             <button data-bind='click: viewModel.prev, visible: viewModel.page() > 1'> prev </button>
             <button data-bind='click: viewModel.next'> next </button>
@@ -38,23 +41,24 @@
         return objlist;
     }
 
-    function Section(id, typ, order, page, questions)
+    function Section(id, type, order, page, questions)
     {
-        this.typ = ko.observable(typ);
+        this.type = ko.observable(type);
         this.id = ko.observable(id);
         this.order = ko.observable(order);
         this.page = ko.observable(page);
         this.questions = ko.observableArray(questions);
     };
 
-    function Question(id, typ, text, options, value, forloop, if_statement)
+    function Question(id, type, text, options, value, forloop, caption, if_statement)
     {
         this.id = ko.observable(id);
-        this.typ = ko.observable(typ);
+        this.type = ko.observable(type);
         this.text = ko.observable(text);
         this.options = ko.observableArray(options);
         this.selected = ko.observable();
         this.value = ko.observable(value);
+        this.caption = ko.observable(caption);
         this.if_statement = ko.observableArray(if_statement);
 
     };
@@ -64,6 +68,36 @@
         this.logic = ko.observable(logic);
         this.value = ko.observable(value);
         this.do_this = ko.observable(do_this);
+    };
+
+    var stringTemplateSource = function (template) {
+        this.template = template;
+    };
+
+    stringTemplateSource.prototype.text = function () {
+        return this.template;
+    };
+
+    var stringTemplateEngine = new ko.nativeTemplateEngine();
+    stringTemplateEngine.makeTemplateSource = function (template) {
+        return new stringTemplateSource(template);
+    };
+
+    var templates = {
+        textarea: '<textarea data-bind="value:value"></textarea>',
+        textfield: '<input type="text" data-bind="value:value" />',
+        select: '<select data-bind="options: options, value: value, optionsCaption: caption, event: {change: viewModel.goto }"></select>',
+        checkbox: '<input type="checkbox" data-bind="checked:value" />'
+    };
+
+    ko.bindingHandlers.item = {
+        init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+            var options = ko.utils.unwrapObservable(valueAccessor());
+            console.log(options);
+            options.value = ko.observable('');
+            console.log(options.type);
+            ko.renderTemplate(templates[options.type()], options, { templateEngine: stringTemplateEngine }, element, 'replaceNode');
+        }
     };
 
     var viewModel =
@@ -111,7 +145,7 @@
                         var id = if_statement.do_this();
                         for (var j = 0; j < sections.length; j++)
                         {
-                            if (sections[j]._id == id)
+                            if (sections[j].id == id)
                             {
                                 var page = sections[j].page;
                             }
@@ -124,7 +158,7 @@
                         var id = if_statement.do_this();
                         for (var j = 0; j < sections.length; j++)
                         {
-                            if (sections[j]._id == id)
+                            if (sections[j].id == id)
                             {
                                 var page = sections[j].page;
                             }
@@ -137,7 +171,7 @@
                         var id = if_statement.do_this();
                         for (var j = 0; j < sections.length; j++)
                         {
-                            if (sections[j]._id == id)
+                            if (sections[j].id == id)
                             {
                                 var page = sections[j].page;
                             }
@@ -151,7 +185,7 @@
                         var id = if_statement.do_this();
                         for (var j = 0; j < sections.length; j++)
                         {
-                            if (sections[j]._id == id)
+                            if (sections[j].id == id)
                             {
                                 var page = sections[j].page;
                             }
@@ -188,10 +222,10 @@
                return new If_Statement(logic.logic, logic.value, logic.do);
            });
            return new Question(
-                   question._id, question.typ, question.text,
-                   question.options, question.value, question.forloop, mappedLogics);
+                   question.id, question.type, question.text,
+                   question.options, question.value, question.forloop, question.caption, mappedLogics);
        });
-       return new Section(section._id, section.typ, section.order, section.page, mappedQuestions);
+       return new Section(section.id, section.type, section.order, section.page, mappedQuestions);
     });
     viewModel.sections(mappedSections);
 

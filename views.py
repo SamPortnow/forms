@@ -24,18 +24,18 @@ def form():
         'sections':
             [
                 {
-                    'typ':'page',
-                    '_id':'Page1',
+                    'type':'page',
+                    'id':'Page1',
                     'order':'',
                     'page':1,
                     'questions':
                         [
                             {
-                                '_id':'Question1',
-                                'typ':'mc',
+                                'id':'Question1',
+                                'type':'select',
                                 'text':'How are you feeling?',
-                                'options':['','Bad', 'Neutral', 'Good', 'Great', 4, 5],
-                                'value':'',
+                                'options':['Bad', 'Neutral', 'Good', 'Great', 4, 5],
+                                'caption': 'Choose...',
                                 'if_statement': [
                                         {
                                             'logic':'equals',
@@ -63,35 +63,34 @@ def form():
 
 
                                       ]
+                            },
+                            {
+                                'id':'Question3',
+                                'type':'textarea',
+                                'text': 'How were you feeling yesterday?',
+                                'if_statement': [
+                                      ]
                             }
                         ],
                     },
                     {
-                    'typ':'page',
+                    'type':'page',
                     'page':2,
-                    '_id':"Page2",
+                    'id':"Page2",
                     'order':'',
                     'questions':
                         [
                             {
-                                '_id':'Question2',
-                                'type':'mc',
+                                'id':'Question2',
+                                'type':'select',
                                 'text': 'How were you feeling yesterday?',
                                 'forloop': 3,
-                                'options':['','Bad','Neutral', 'Good'],
-                                'value':'',
+                                'options':['Bad','Neutral', 'Good'],
+                                'caption': 'Choose...',
                                 'if_statement': [
                                       ]
-                            }
+                            },
                         ]
-                    },
-
-                    {
-                        'typ':'page',
-                        '_id': 'Page3',
-                        'page':3,
-                        'order': '',
-                        'questions': questions
                     }
             ]
     }]

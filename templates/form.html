@@ -109,6 +109,7 @@
     var viewModel =
     {
         page: ko.observable(1),
+        visitedPages: ko.observableArray(),
         goto: function()
         {
             var val = this.value();
@@ -120,11 +121,33 @@
         },
         next: function(){
             var page = viewModel.page();
-            viewModel.page(page + 1);
+            var nextPage = page + 1;
+            var index = viewModel.visitedPages().indexOf(page);
+            if (index < 0)
+            {
+                viewModel.visitedPages().push(page);
+            }
+            else
+            {
+                if (index < viewModel.visitedPages().length-1)
+                {
+                    nextPage = viewModel.visitedPages()[index + 1];
+                }
+            }
+            viewModel.page(nextPage);
         },
         prev: function(){
             var page = viewModel.page();
-            viewModel.page(page - 1);
+            var index = viewModel.visitedPages().indexOf(page);
+            if (index < 0)
+            {
+                viewModel.visitedPages().push(page);
+            }
+            var pages = viewModel.visitedPages();
+            var index = viewModel.visitedPages.indexOf(page);
+            console.log(index);
+            viewModel.page(pages[index - 1]);
+
         },
         sections: ko.observableArray([
             {
@@ -171,6 +194,10 @@
                                 var page = sections[j].page;
                             }
                         }
+                        if (viewModel.visitedPages().indexOf(page) < 0)
+                        {
+                            viewModel.visitedPages().push(page);
+                        }
                         viewModel.page(page);
                     }},
         'greater than': function (val, if_statement) {
@@ -183,6 +210,10 @@
                             {
                                 var page = sections[j].page;
                             }
+                        }
+                        if (viewModel.visitedPages().indexOf(page) < 0)
+                        {
+                            viewModel.visitedPages().push(page);
                         }
                         viewModel.page(page);
                     }},
@@ -197,6 +228,10 @@
                             {
                                 var page = sections[j].page;
                             }
+                        }
+                        if (viewModel.visitedPages().indexOf(page) < 0)
+                        {
+                            viewModel.visitedPages().push(page);
                         }
                         viewModel.page(page);
             }

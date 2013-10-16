@@ -57,6 +57,13 @@
         }
     };
 
+    function BoundSection(question, section)
+    {
+        this.question = question;
+        this.section = section;
+        return this;
+    }
+
     function Question(id, type, text, options, value, forloop, caption, if_statement)
     {
         this.id = ko.observable(id);
@@ -70,7 +77,7 @@
 
     };
 
-    function If_Statement(logic, value, do_this, place)
+    function IfStatement(logic, value, do_this, place)
     {
         this.logic = ko.observable(logic);
         this.value = ko.observable(value);
@@ -109,14 +116,16 @@
     var viewModel =
     {
         page: ko.observable(1),
+        boundSections: ko.observableArray(),
         visitedPages: ko.observableArray(),
         goto: function()
         {
+            checkSections(this);
             var val = this.value();
             for (var i=0; i < this.if_statement().length; i++)
             {
                 var logic = this.if_statement()[i].logic();
-                apply_logic[logic](val, this.if_statement()[i]);
+                apply_logic[logic](val, this.if_statement()[i], this);
             }
         },
         next: function(){
@@ -145,7 +154,6 @@
             }
             var pages = viewModel.visitedPages();
             var index = viewModel.visitedPages.indexOf(page);
-            console.log(index);
             viewModel.page(pages[index - 1]);
 
         },
@@ -160,10 +168,22 @@
             }])
     };
 
+    function checkSections(question)
+    {
+        for (var i=0; i < viewModel.boundSections().length; i++)
+        {
+            if (question == viewModel.boundSections()[i].question)
+            {
+
+                viewModel.boundSections()[i].section.visible(false);
+
+            }
+        }
+    }
 
     var apply_logic =
     {
-        'equals': function (val, if_statement) {
+        'equals': function (val, if_statement, question) {
                 if (val == if_statement.value())
                     {
                         var id = if_statement.place();
@@ -174,6 +194,8 @@
                                 if (mappedSections[j].visible() == false)
                                 {
                                     mappedSections[j].visible(true);
+                                    viewModel.boundSections().push(new BoundSection(question, mappedSections[j]));
+
                                 }
                                 else
                                 {
@@ -183,7 +205,7 @@
                             }
                         }
                     }},
-        'less than': function (val, if_statement) {
+        'less than': function (val, if_statement, question) {
                 if (val < if_statement.value())
                     {
                         var id = if_statement.do_this();
@@ -200,7 +222,7 @@
                         }
                         viewModel.page(page);
                     }},
-        'greater than': function (val, if_statement) {
+        'greater than': function (val, if_statement, question) {
                 if (val == if_statement.value())
                     {
                         var id = if_statement.do_this();
@@ -217,7 +239,7 @@
                         }
                         viewModel.page(page);
                     }},
-        'between': function(val, if_statement)
+        'between': function(val, if_statement, question)
         {
             if (val > if_statement.value()[0] && val < if_statement.value()[1])
             {
@@ -265,7 +287,7 @@
        {
            var mappedLogics = ko.utils.arrayMap(question.if_statement, function(logic)
            {
-               return new If_Statement(logic.logic, logic.value, logic.do, logic.place);
+               return new IfStatement(logic.logic, logic.value, logic.do, logic.place);
            });
 
            return new Question(
@@ -277,6 +299,7 @@
     viewModel.sections(mappedSections);
 
     ko.applyBindings(viewModel);
+
 
 </script>
 </body>

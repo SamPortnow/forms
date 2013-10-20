@@ -142,5 +142,9 @@ def form():
     form_data = json.dumps(form_data)
     return render_template('form.html', form_data=form_data)
 
+@app.route('/create')
+def create():
+    return render_template('create_form.html')
+
 if __name__ == '__main__':
     app.run()

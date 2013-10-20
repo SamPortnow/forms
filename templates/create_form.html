@@ -1,0 +1,220 @@
+{% include 'base.html' %}
+<style>
+        body
+        {
+            font-family: 'Garamond', 'Georgia', serif;
+        }
+        .content
+        {
+            height: 768px;
+            margin:0 auto;
+            border:solid 1px #c3c7bd;
+        }
+</style>
+<body>
+    <div class="text-center" style="font-size:26px">
+            welcome
+    </div>
+    <div data-bind="foreach:sections">
+        <div class="row">
+            <div class="content col-sm-8" data-bind="{droppable: $data}">
+            <div class="container" data-bind="sortable: {template:'questionTmpl', data:questions}">
+            </div>
+            </div>
+            <div class="options col-sm-2">
+                <ul class>
+                    <li data-bind="draggable:{data:viewModel.textarea()}" id="textarea">text area</li>
+                    <hr>
+                    <li data-bind="draggable:{data:viewModel.textfield()}" id="textfield">text field</li>
+                    <hr>
+                    <li data-bind="draggable:{data:viewModel.select()}" id="select">select</li>
+                    <hr>
+                    <li data-bind="draggable:{data:viewModel.slider()}" id="slider">sliders</li>
+                    <hr>
+                    <li data-bind="draggable:{data:viewModel.radio()}" id="radio">radio</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="text-center">
+            <button class="col-sm-8" onclick="viewModel.createSection()">create new section</button>
+        </div>
+    </div>
+    <h3> the data structure </h3>
+    <script id="questionTmpl" type="text/html">
+        <div class="question">
+            <a href="#" data-bind="text:id"></a>
+        </div>
+    </script>
+</body>
+<script>
+
+
+    function Section(id, type, order, page, visible, questions)
+    {
+        this.type = ko.observable(type);
+        this.id = ko.observable(id);
+        this.order = ko.observable(order);
+        this.page = ko.observable(page);
+        this.questions = ko.observableArray(questions);
+        if (visible != undefined)
+        {
+            this.visible = ko.observable(visible);
+        }
+        else
+        {
+            this.visible = ko.observable(true);
+        }
+
+        this.addQuestion = function(type)
+        {
+            var question = new Question('Question1', type);
+            console.log(this.questions);
+            console.log(this);
+            this.questions.push(question);
+        }
+
+    };
+
+    function Question(id, type, text, options, value, forloop, caption, if_statement)
+    {
+        this.id = ko.observable(id);
+        this.type = ko.observable(type);
+        this.text = ko.observable(text);
+        this.options = ko.observableArray(options);
+        this.selected = ko.observable();
+        this.value = ko.observable(value);
+        this.caption = ko.observable(caption);
+        this.if_statement = ko.observableArray(if_statement);
+
+    };
+
+    function IfStatement(logic, value, do_this, place)
+    {
+        this.logic = ko.observable(logic);
+        this.value = ko.observable(value);
+        this.do_this = ko.observable(do_this);
+        this.place = ko.observable(place);
+    };
+
+
+    var stringTemplateSource = function (template) {
+        this.template = template;
+    };
+
+    stringTemplateSource.prototype.text = function () {
+        return this.template;
+    };
+
+    var stringTemplateEngine = new ko.nativeTemplateEngine();
+    stringTemplateEngine.makeTemplateSource = function (template) {
+        return new stringTemplateSource(template);
+    };
+
+    var templates = {
+        textarea: '<textarea data-bind="value:value"></textarea>',
+        textfield: '<input type="text" data-bind="value:value" />',
+        select: '<select data-bind="options: options, value: value, optionsCaption: caption"></select>',
+        checkbox: '<input type="checkbox" data-bind="checked:value" />'
+    };
+    var DRAGKEY = "ko_dragItem";
+    var dataSet = ko.utils.domData.set;
+    var unwrap = ko.utils.unwrapObservable;
+
+    ko.bindingHandlers.droppable = {
+        init: function(element, section) {
+            $(element).droppable({
+                drop: function(event, ui) {
+                    var item = ko.utils.domData.get(ui.draggable[0], "ko_dragItem");
+                    if (item)
+                    {
+                        item = item.clone ? item.clone() : item;
+                        section().addQuestion(item);
+                    }
+                }
+            });
+        }
+    };
+
+    ko.bindingHandlers.draggable = {
+        init: function(element, valueAccessor, allBindingsAccessor, data, context) {
+            var value = unwrap(valueAccessor()) || {},
+            value = value.data || value;
+            //set meta-data
+            dataSet(element, DRAGKEY, value);
+            $(element).draggable({'revert':true});
+        }
+    };
+
+
+    ko.bindingHandlers.visibleAndSelect = {
+        update: function(element, valueAccessor) {
+            ko.bindingHandlers.visible.update(element, valueAccessor);
+            if (valueAccessor()) {
+                setTimeout(function() {
+                    $(element).find("input").focus().select();
+                }, 0); //new tasks are not in DOM yet
+            }
+        }
+    };
+
+    ko.bindingHandlers.sortableList = {
+        init: function(element, valueAccessor, allBindingsAccessor, data, context)
+        {
+            var list = valueAccessor();
+            $(element).sortable({
+                update: function(event, ui)
+                {
+                    var item = ui.item.tmplItem().data;
+
+                    var position = ko.utils.arrayIndexOf(ui.item.parent().children(), ui.item[0]);
+                    if (position >= 0)
+                    {
+                        list().remove(item);
+                        list().splice(position, 0, item);
+                    }
+                }
+            });
+        }
+    };
+
+    var viewModel =
+    {
+        self: this,
+        pages: ko.observable(1),
+        textarea: ko.observable('textarea'),
+        textfield: ko.observable('textfield'),
+        select: ko.observable('select'),
+        slider: ko.observable('slider'),
+        radio: ko.observable('radio'),
+        sections: ko.observableArray([
+            {
+                questions: ko.observableArray([
+                        {
+                            logics: ko.observableArray([
+                            ])
+                        }
+                ])
+            }]),
+        createSection: function()
+        {
+            console.log(this);
+            this.pages(this.pages() + 1);
+            var section = new Section(this.pages());
+            this.sections.push(section);
+        }
+    };
+    var base = [new Section('Page1')];
+    viewModel.sections(base);
+
+    ko.applyBindings(viewModel);
+
+
+</script>
+</body>
+
+</body>
+</html>
+

@@ -101,6 +101,21 @@ def form():
                     },
                 {
                     'type':'section',
+                    'page':2,
+                    'id':'Section3',
+                    'visible':False,
+                    'order':'',
+                    'questions':
+                        [
+                            {
+                                'id':'Question4',
+                                'type':'textfield',
+                                'text':'Feel Better!',
+                            }
+                        ]
+                },
+                {
+                    'type':'section',
                     'page': 2,
                     'id':'Section2',
                     'order':'',
@@ -122,21 +137,6 @@ def form():
                             }
                         ],
                 },
-                {
-                    'type':'section',
-                    'page':2,
-                    'id':'Section3',
-                    'visible':False,
-                    'order':'',
-                    'questions':
-                        [
-                            {
-                                'id':'Question4',
-                                'type':'textfield',
-                                'text':'Feel Better!',
-                            }
-                        ]
-                }
             ]
     }]
     form_data = json.dumps(form_data)
@@ -145,6 +145,10 @@ def form():
 @app.route('/create')
 def create():
     return render_template('create_form.html')
+
+@app.route('/logic')
+def logic():
+    return render_template('logic.html')
 
 if __name__ == '__main__':
     app.run()

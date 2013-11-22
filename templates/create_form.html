@@ -10,6 +10,10 @@
             margin:0 auto;
             border:solid 1px #c3c7bd;
         }
+       .controls
+       {
+           border:solid 1px #c3c7bd;
+       }
 </style>
 <body>
     <div class="text-center" style="font-size:26px">
@@ -23,15 +27,15 @@
             </div>
             <div class="options col-sm-2">
                 <ul class>
-                    <li data-bind="draggable:{data:viewModel.textarea()}" id="textarea">text area</li>
+                    <li data-bind="draggable:{data:$root.textarea}" id="textarea">text area</li>
                     <hr>
-                    <li data-bind="draggable:{data:viewModel.textfield()}" id="textfield">text field</li>
+                    <li data-bind="draggable:{data:$root.textfield}" id="textfield">text field</li>
                     <hr>
-                    <li data-bind="draggable:{data:viewModel.select()}" id="select">select</li>
+                    <li data-bind="draggable:{data:$root.select}" id="select">select</li>
                     <hr>
-                    <li data-bind="draggable:{data:viewModel.slider()}" id="slider">sliders</li>
+                    <li data-bind="draggable:{data:$root.slider}" id="slider">sliders</li>
                     <hr>
-                    <li data-bind="draggable:{data:viewModel.radio()}" id="radio">radio</li>
+                    <li data-bind="draggable:{data:$root.radio}" id="radio">radio</li>
                 </ul>
             </div>
         </div>
@@ -39,17 +43,84 @@
     <hr>
     <div class="row">
         <div class="text-center">
-            <button class="col-sm-8" onclick="viewModel.createSection()">create new section</button>
+            <button class="col-sm-8" data-bind="click:$root.createSection">create new section</button>
         </div>
     </div>
-    <h3> the data structure </h3>
+    <script id="option-template" type="text/html">
+        <br>
+        <input data-bind='value: option'/>
+        <button type='submit' data-bind='click:addIt'>Add</button>
+    </script>
     <script id="questionTmpl" type="text/html">
-        <div class="question">
-            <a href="#" data-bind="text:id"></a>
+        <div class="control-group">
+            <input data-bind="value:$data.text, attr:{for:$data.id}">
+            <div class="text-center controls">
+                 <div data-bind='item:$data, attr:{id:$data.id}'></div>
+                <button data-bind="click:$data.showlogic">add logic</button>
+            </div>
         </div>
+          <div class="modal fade" data-bind="visible: showmodal, modal:$data" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                  <h4 class="modal-title">Modal title</h4>
+                </div>
+                <div class="modal-body" data-bind="foreach:_options">
+                   <div>
+                        <input data-bind="value:option"/><button>submit</button>
+                   </div>
+                </div>
+                <div class="modal-footer">
+                  <button data-bind='click:addOption'>add option</button>
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-primary">Save changes</button>
+                </div>
+              </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+          </div><!-- /.modal -->
+          <div class="modal fade" data-bind="visible: showmodalif, modalif:$data" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                  <h4 class="modal-title">add logic</h4>
+                </div>
+                <div class="modal-body">
+                    <span data-bind="if:logic">
+                        <div data-bind="template:{name:getTemplate(logic), data:logic}"></div>
+                    </span>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-primary">Save changes</button>
+                </div>
+              </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+          </div><!-
     </script>
 </body>
+<script id="simple" type="text/html">
+    <select data-bind="options:$root.questionNames"></select>
+    <select data-bind="options:logics"></select>
+    <input data-bind="value:output">
+    <button data-bind="click: turnToCompound">+</button>
+</script>
+
+<script id="compound" type="text/html">
+    (
+    <span data-bind="template:{name:getTemplate(left), data:left}"></span>
+    <select data-bind="options:operator"></select>
+    <span data-bind="template:{name:getTemplate(right), data:right}"></span>
+    )
+</script>
 <script>
+
+    function getTemplate($data) {
+        $data = ko.utils.unwrapObservable($data);
+        console.log($data);
+        return $data.operator ? 'compound' : 'simple';
+    }
 
 
     function Section(id, type, order, page, visible, questions)
@@ -59,6 +130,7 @@
         this.order = ko.observable(order);
         this.page = ko.observable(page);
         this.questions = ko.observableArray(questions);
+        this.questionNumber = ko.observable(0);
         if (visible != undefined)
         {
             this.visible = ko.observable(visible);
@@ -70,9 +142,9 @@
 
         this.addQuestion = function(type)
         {
-            var question = new Question('Question1', type);
-            console.log(this.questions);
-            console.log(this);
+            this.questionNumber(this.questionNumber() + 1);
+            var id = this.questionNumber();
+            question = new Question(id, type(), "enter question");
             this.questions.push(question);
         }
 
@@ -80,24 +152,66 @@
 
     function Question(id, type, text, options, value, forloop, caption, if_statement)
     {
+        var self  = this;
         this.id = ko.observable(id);
         this.type = ko.observable(type);
         this.text = ko.observable(text);
-        this.options = ko.observableArray(options);
+        this._options = ko.observableArray();
+        this.options = ko.computed(function() {
+            return $.map(self._options(), function(option) {
+                return option.option();
+            });
+        });
         this.selected = ko.observable();
+        this.logic = ko.observable();
         this.value = ko.observable(value);
         this.caption = ko.observable(caption);
-        this.if_statement = ko.observableArray(if_statement);
+        this.showmodal = ko.observable(false);
+        this.showOption = function(question)
+        {
+            self.showmodal(true);
+        }
+
+        this.addOption = function(question)
+        {
+            self._options.push({option: ko.observable(' ')});
+        };
+
+        this.showmodalif = ko.observable(false);
+
+        this.showlogic = function(question)
+        {
+            self.logic(new Statement(self.logic));
+            self.showmodalif(true);
+        };
 
     };
 
-    function IfStatement(logic, value, do_this, place)
+    function Compound(statement, whatami)
     {
-        this.logic = ko.observable(logic);
-        this.value = ko.observable(value);
-        this.do_this = ko.observable(do_this);
-        this.place = ko.observable(place);
+        var self = this;
+        self.operator = ko.observableArray(['OR', 'AND']);
+        self.left = ko.observable(statement);
+        self.left(new Statement(self.left));
+        self.right = ko.observable();
+        self.right(new Statement(self.right));
     };
+
+    function Statement(whatami)
+    {
+        var self = this;
+        self._id = ko.observable();
+        self.compare = ko.observable();
+        self.logics = ['less than', 'equal to', 'greater than', 'contains'];
+        self.output = ko.observable();
+        self.turnToCompound = function(statement)
+        {
+            whatami(new Compound(self));
+            console.log(self);
+        };
+
+    };
+
 
 
     var stringTemplateSource = function (template) {
@@ -116,12 +230,65 @@
     var templates = {
         textarea: '<textarea data-bind="value:value"></textarea>',
         textfield: '<input type="text" data-bind="value:value" />',
-        select: '<select data-bind="options: options, value: value, optionsCaption: caption"></select>',
+        select: '<select data-bind="options: options, value: value, optionsCaption: caption">' +
+                '</select><button data-bind="click:showOption">create option</button>',
         checkbox: '<input type="checkbox" data-bind="checked:value" />'
     };
+
+    ko.bindingHandlers.item = {
+        init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+            var options = ko.utils.unwrapObservable(valueAccessor());
+            ko.renderTemplate(templates[options.type()], options, { templateEngine: stringTemplateEngine }, element, 'replaceNode');
+        }
+    };
+
     var DRAGKEY = "ko_dragItem";
     var dataSet = ko.utils.domData.set;
     var unwrap = ko.utils.unwrapObservable;
+
+    ko.bindingHandlers.modal = {
+        init: function (element, valueAccessor) {
+            var ques = valueAccessor();
+            $(element).modal({show: false}).on("hidden.bs.modal", function()
+            {
+                ques.showmodal(false);
+            });
+        },
+        update: function (element, valueAccessor) {
+            var value = valueAccessor();
+            if (value.showmodal()) {
+                $(element).modal('show');
+
+            }
+            else
+            {
+                $(element).modal('hide');
+            }
+        }
+    };
+
+    ko.bindingHandlers.modalif = {
+        init: function (element, valueAccessor) {
+            var ques = valueAccessor();
+            $(element).modal({show: false}).on("hidden.bs.modal", function()
+            {
+                ques.showmodalif(false);
+            });
+        },
+        update: function (element, valueAccessor) {
+            var value = valueAccessor();
+            if (value.showmodalif()) {
+                $(element).modal('show');
+
+            }
+            else
+            {
+                $(element).modal('hide');
+            }
+        }
+    };
+
+
 
     ko.bindingHandlers.droppable = {
         init: function(element, section) {
@@ -180,36 +347,52 @@
         }
     };
 
-    var viewModel =
-    {
-        self: this,
-        pages: ko.observable(1),
-        textarea: ko.observable('textarea'),
-        textfield: ko.observable('textfield'),
-        select: ko.observable('select'),
-        slider: ko.observable('slider'),
-        radio: ko.observable('radio'),
-        sections: ko.observableArray([
-            {
-                questions: ko.observableArray([
-                        {
-                            logics: ko.observableArray([
-                            ])
-                        }
-                ])
-            }]),
-        createSection: function()
+    function ViewModel() {
+
+        var self = this;
+        self.pages = ko.observable(1);
+        self.textarea= ko.observable('textarea');
+        self.textfield= ko.observable('textfield');
+        self.select= ko.observable('select');
+        self.slider= ko.observable('slider');
+        self.radio=ko.observable('radio');
+        self.sections= ko.observableArray();
+        self.operators = ['and', 'or'];
+        self.logics = ['less than', 'equal to', 'greater than', 'contains']
+        self.questionNames = ko.computed(function()
         {
-            console.log(this);
-            this.pages(this.pages() + 1);
-            var section = new Section(this.pages());
-            this.sections.push(section);
-        }
-    };
-    var base = [new Section('Page1')];
-    viewModel.sections(base);
+            return $.map(self.sections(), function(section)
+            {
+                return $.map(section.questions(), function(question)
+                {
+                    return question.text();
+                });
+            });
+        });
+        self.sectionNames= ko.computed(function() {
+            return $.map(self.sections(), function(section) {
+                return section.id();
+            });
+        });
+
+        self.createSection= function()
+        {
+            self.pages(self.pages() + 1);
+            var section = new Section(self.pages());
+            self.sections.push(section);
+        };
+
+    }
+    var viewModel = new ViewModel();
+    var base = new Section('Page1');
+    viewModel.sections.push(base);
 
     ko.applyBindings(viewModel);
+
+    function applyLogic(logic)
+    {
+
+    };
 
 
 </script>

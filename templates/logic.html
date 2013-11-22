@@ -1,0 +1,85 @@
+{% include 'base.html' %}
+<style>
+        body
+        {
+            font-family: 'Garamond', 'Georgia', serif;
+        }
+</style>
+<body>
+<p data-bind="text:ko.toJSON(mappedLogics)"> </p>
+
+<div data-bind="template:{name:getTemplate(logic), data:logic}"></div>
+
+
+<script id="simple" type="text/html">
+    <span data-bind="text:_id"></span>
+    <span data-bind="text:logic"></span>
+    <span data-bind="text:output"></span>
+</script>
+
+<script id="compound" type="text/html">
+    (
+    <span data-bind="template:{name:getTemplate(left), data:left}"></span>
+    <span data-bind="text:operator"></span>
+    <span data-bind="template:{name:getTemplate(right), data:right}"></span>
+    )
+</script>
+</body>
+
+
+<script>
+
+    function getTemplate($data) {
+        $data = ko.utils.unwrapObservable($data);
+        return $data.operator ? 'compound' : 'simple';
+    }
+
+    var logics = {
+        operator: 'or',
+        left: {
+            operator: 'and',
+            left: {_id: 'Question1', logic: 'eq', output: 'A'},
+            right: {_id: 'Question2', logic: 'eq', output: 'B'}
+        },
+        right: {_id: 'Question3', logic: 'eq', output: 'C'}
+    };
+
+    function Simple(data) {
+
+        this._id = data._id;
+        this.logic = data.logic;
+        this.output = data.output;
+
+    }
+
+    function Compound(data) {
+
+        this.operator = data.operator;
+        this.left = processRule(data.left);
+        this.right = processRule(data.right);
+
+    }
+
+    function processRule(data) {
+        console.log(data);
+        console.log(data.operator);
+        if (data.operator) {
+            return new Compound(data);
+        }
+        return new Simple(data);
+    }
+
+    var viewModel =
+    {
+        self: this,
+        logic: ko.observable()
+    };
+
+
+    var mappedLogics = logics;
+    var mappedLogics = processRule(logics);
+    viewModel.logic(mappedLogics);
+    ko.applyBindings(viewModel);
+
+
+</script>

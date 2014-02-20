@@ -1,28 +1,58 @@
 {% include 'base.html' %}
 <style>
+        @import url("//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css");
+
         body
         {
-            font-family: 'Garamond', 'Georgia', serif;
+            font-family:"Lato", "Myriad Pro", "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif, monospace;
+            font-size: 16px;
+            margin-left: 192px;
         }
         .content
         {
-            height: 768px;
-            margin:0 auto;
-            border:solid 1px #c3c7bd;
+            min-height:100px;
+            border:solid 10px #c3c7bd;
+            padding:5px;
         }
-       .controls
-       {
-           border:solid 1px #c3c7bd;
-       }
+
+        .holder
+        {
+            border:solid 1px cornflowerblue;
+        }
+
+        .alert 
+        {
+          font-size:12px;    
+        }
+
 </style>
 <body>
-    <div class="text-center" style="font-size:26px">
+    <div data-bind="text:ko.toJSON(sections)"></div>
+    <div style="font-size:32px">
             welcome
+            <br>
+            <span style="font-size: 18px" data-bind="foreach:banks">
+                   <label>name of bank</label> <input data-bind="value:$data.id">
+                   <button class="btn btn-default" data-bind="click:removeBank">X</button>
+            </span>
     </div>
+         <div class="col-sm-2" style="float:right;">
+           <button class="btn btn-success" data-bind="click:createBank">create question bank</button>
+        </div>
+    <hr>
     <div data-bind="foreach:sections">
         <div class="row">
-            <div class="content col-sm-8" data-bind="{droppable: $data}">
-            <div class="container" data-bind="sortable: {template:'questionTmpl', data:questions}">
+            <div class="col-sm-4">
+            <label>section label</label>
+            <input data-bind="value:id">
+            <div class="alert alert-danger" data-bind="visible:$data.labelerror">need a label longer than 3 characters with no spaces or special characters</div>
+            <label>type of section</label>
+            <select data-bind="options:types, optionsCaption: 'select one...', value:type"></select>
+            </div>
+        </div>
+        <div class="row">
+            <div class="content col-sm-8" data-bind="droppable: $data">
+            <div class="container" data-bind="sortable: {template:getQuestion, data:questions}">
             </div>
             </div>
             <div class="options col-sm-2">
@@ -33,102 +63,301 @@
                     <hr>
                     <li data-bind="draggable:{data:$root.select}" id="select">select</li>
                     <hr>
-                    <li data-bind="draggable:{data:$root.slider}" id="slider">sliders</li>
+                    <li data-bind="draggable:{data:$root.slider}" id="slider">slider</li>
                     <hr>
                     <li data-bind="draggable:{data:$root.radio}" id="radio">radio</li>
+                    <hr>
+                    <li data-bind="draggable:{data:$root.date}" id="date">date</li>
+                    <hr>
+                    <li data-bind="draggable:{data:$root.random}" id="random">random</li>
                 </ul>
             </div>
         </div>
     </div>
+    <div class="row">
+        <div class="text-center">
+            <button data-bind="click:$root.createSection" class="btn btn-primary col-sm-8">create new section</button>
+        </div>
+    </div>
+    <br>
+    <br>
     <hr>
     <div class="row">
         <div class="text-center">
-            <button class="col-sm-8" data-bind="click:$root.createSection">create new section</button>
+            <div class="alert alert-danger" data-bind="visible:$root.submitError">whoops! looks like there was an error!</div>
+            <button data-bind="click:$root.submitMe" class="btn btn-success col-sm-8">submit</button>
         </div>
     </div>
+
     <script id="option-template" type="text/html">
         <br>
         <input data-bind='value: option'/>
-        <button type='submit' data-bind='click:addIt'>Add</button>
+        <button type='submit' data-bind='click:addIt' class="btn btn-primary">Add</button>
     </script>
     <script id="questionTmpl" type="text/html">
-        <div class="control-group">
-            <input data-bind="value:$data.text, attr:{for:$data.id}">
-            <div class="text-center controls">
-                 <div data-bind='item:$data, attr:{id:$data.id}'></div>
-                <button data-bind="click:$data.showlogic">add logic</button>
+        <div class="holder">
+        <div class="form-group" data-bind="if:$data.edit, attr:{for:$data.id}" style="overflow:hidden">
+            <button class="btn btn-danger" data-bind="click:$data.removeIt, attr:{for:$data.id}" style="float: right;">remove</button>
+            <button class="btn btn-success" data-bind="click:$data.showIt, attr:{for:$data.id}" style="float: right;">display</button>
+            <button class="btn btn-default" data-bind="click:$data.showBank, attr:{for:$data.id}" style="float: right;">add to</button>
+            <div class="control-group">
+                <label>enter question</label>
+                <input class="form-control" data-bind="value:$data.text, attr:{for:$data.id}">
+                <div class="alert alert-warning" data-bind="visible:$data.questionerror">enter your question</div>
+
+                <br>
+                <label>enter label</label>
+                <input class="form-control" data-bind="value:$data.label, attr:{for:$data.id}">
+                <div class="alert alert-danger" data-bind="visible:$data.labelerror">need a label longer than 3 characters with no spaces or special characters</div>
+                <br>
+                    <div class="text-center controls">
+                        <div data-bind="if:$data.minTimeSetting.min() || $data.maxTimeSetting.max()">
+                         <span data-bind='if:$data.minTimeSetting.min'>
+                             <span data-bind="text: $data.minTimeSetting.fulltime"></span>
+                         </span>
+                         <span data-bind='if:$data.maxTimeSetting.max'>
+                               <span data-bind="text: $data.maxTimeSetting.fulltime"></span>
+                         </span>
+                         </div>
+                         <div data-bind='item:$data, attr:{id:$data.id}'></div>
+                         <button data-bind="click:$data.showlogic" class="btn btn-primary">add logic</button>
+                        <button class="btn btn-warning" data-bind="click:$data.editTime">edit time</button>
+                    </div>
+              <div class="modal fade" data-bind="visible: showmodal, modal:$data" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                      <h4 class="modal-title" >ADD OPTIONS</h4>
+                    </div>
+                    <div class="modal-body" data-bind="foreach:_options">
+                       <div>
+                            <input data-bind="value:option"/><button class="btn btn-danger" data-bind="click:$parent.removeOption">-</button>
+                       </div>
+                    </div>
+                      <button data-bind='click:addOption' class="btn btn-success">add option</button>
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                  </div>
+                </div>
+
+              <div class="modal fade" data-bind="visible: showmodalif, modalif:$data" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                      <h4 class="modal-title">ADD LOGIC</h4>
+                    </div>
+                    <div class="modal-body">
+                        Show this question if... <span data-bind="if:logic">
+                            <div data-bind="template:{name:getTemplate(logic), data:logic}"></div>
+                        </span>
+                    </div>
+                    <br>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                  </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+              </div>
+
+
+                <div class="modal fade" data-bind="visible: $data.showmodalslider, modalslide:$data" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                      <h4 class="modal-title">SLIDER SETTINGS</h4>
+                    </div>
+                    <div class="modal-body">
+                        <label>min</label><input data-bind="value: $data.sliderSettings.min, slide: $data.sliderSettings.current, sliderOptions:{min: $data.sliderSettings.min, max: $data.sliderSettings.max, stepper: $data.sliderSettings.stepper, current:$data.sliderSettings.current}">
+                        <br>
+                        <label>max</label><input data-bind="value: $data.sliderSettings.max, slide: $data.sliderSettings.current, sliderOptions:{min: $data.sliderSettings.min, max: $data.sliderSettings.max, stepper: $data.sliderSettings.stepper}">
+                        <br>
+                        <label>step</label><input data-bind="value: $data.sliderSettings.stepper, slide: $data.sliderSettings.current, sliderOptions:{min: $data.sliderSettings.min, max: $data.sliderSettings.max, stepper: $data.sliderSettings.stepper}">
+                        <br>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                  </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+              </div>
+
+                <div class="modal fade" data-bind="visible: $data.showmodaltime, modaltime:$data" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                      <h4 class="modal-title">TIME SETTINGS</h4>
+                    </div>
+                    <div class="modal-body">
+                        <label>minimum time</label><input data-bind="value: $data.minTimeSetting.min"><select data-bind="options:$data.minTimeSetting.times, value:$data.maxTimeSetting.time"></select>
+                        <br>
+                        <label>maximum time</label><input data-bind="value: $data.maxTimeSetting.max"><select data-bind="options:$data.maxTimeSetting.times, value:$data.minTimeSetting.time"></select>
+                        <br>
+                        <br>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                  </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+              </div>
+
+                 <div class="modal fade" data-bind="visible: $data.showmodalbank, modalbank:$data" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                      <h4 class="modal-title">ADD TO</h4>
+                    </div>
+                    <div class="modal-body">
+                        <select  data-bind='options:$root.bankNames,  optionsCaption: "Select...", value:selectedBank, event:{change:addToBank}'></select>
+
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                  </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+              </div>
             </div>
+            </div>
+         <div data-bind="if:$data.show, attr:{id:$data.id}" style="overflow:hidden">
+            <button class="btn btn-primary" data-bind="click:$data.editIt, attr:{id:$data.id}" style="float:right">edit</button>
+            <div data-bind="text:$data.text, attr:{id:$data.id}"></div>
+            <div data-bind='item:$data, attr:{id:$data.id}'></div>
         </div>
-          <div class="modal fade" data-bind="visible: showmodal, modal:$data" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                  <h4 class="modal-title">Modal title</h4>
-                </div>
-                <div class="modal-body" data-bind="foreach:_options">
-                   <div>
-                        <input data-bind="value:option"/><button>submit</button>
-                   </div>
-                </div>
-                <div class="modal-footer">
-                  <button data-bind='click:addOption'>add option</button>
-                  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                  <button type="button" class="btn btn-primary">Save changes</button>
-                </div>
-              </div><!-- /.modal-content -->
-            </div><!-- /.modal-dialog -->
-          </div><!-- /.modal -->
-          <div class="modal fade" data-bind="visible: showmodalif, modalif:$data" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                  <h4 class="modal-title">add logic</h4>
-                </div>
-                <div class="modal-body">
-                    <span data-bind="if:logic">
-                        <div data-bind="template:{name:getTemplate(logic), data:logic}"></div>
-                    </span>
-                </div>
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                  <button type="button" class="btn btn-primary">Save changes</button>
-                </div>
-              </div><!-- /.modal-content -->
-            </div><!-- /.modal-dialog -->
-          </div><!-
+        </div>
+    </script>
+
+    <script id='randomTmpl' type='text/html'>
+         <div class="form-group" data-bind="if:$data.edit, attr:{for:$data.id}" style="overflow:hidden">
+            <button class="btn btn-danger" data-bind="click:$data.removeIt, attr:{for:$data.id}" style="float: right;">remove</button>
+            <button class="btn btn-success" data-bind="click:$data.showRando, attr:{for:$data.id}" style="float: right;">display</button>
+            from which bank do you want pick a question from?
+             <select data-bind='options:$root.bankNames, optionsCaption: "Select...", value:bank'></select>
+         </div>
+          <div data-bind="if:$data.show, attr:{id:$data.id}" style="overflow:hidden">
+             <div data-bind="with: $data.question">
+                <button class="btn btn-primary" data-bind="click:$parent.editIt, attr:{id:$data.id}" style="float:right">edit</button>
+                <div data-bind="text:$data.text, attr:{id:$data.id}"></div>
+                <div data-bind='item:$data, attr:{id:$data.id}'></div>
+             </div>
+        </div>
+        <hr>
     </script>
 </body>
 <script id="simple" type="text/html">
-    <select data-bind="options:$root.questionNames"></select>
-    <select data-bind="options:logics"></select>
-    <input data-bind="value:output">
-    <button data-bind="click: turnToCompound">+</button>
+    <div style="float:left">
+      <select data-bind="options:$root.questionNames, value:selectedQuestion, optionsCaption: 'select one...'"></select>
+      <div data-bind="visible:selectedError" class="alert alert-danger">select</div>
+    </div>
+    <div style="float:left">
+      <select data-bind="options:logics, value:compare, optionsCaption: 'select one...'"></select>
+      <div data-bind="visible:compareError()" class="alert alert-danger">select</div>
+    </div>
+    <div style="float:left">
+      <input data-bind="value:output">
+      <div data-bind="visible:outputError" class="alert alert-danger">need input</div>
+    </div>
+    <button data-bind="click: $parent.removeStatement" class="btn btn-warning">-</button>
+    <button data-bind="click: turnToCompound" class="btn btn-success">+</button>
+    <br>
 </script>
 
 <script id="compound" type="text/html">
-    (
+    <span style="font-size:32px; float:left" data-bind="style: {color: color}"><strong>(</strong></span>
     <span data-bind="template:{name:getTemplate(left), data:left}"></span>
-    <select data-bind="options:operator"></select>
+    <div> 
+      <select style="margin-left:192px" data-bind="options:operator, value:opSelected, optionsCaption: 'select one...'"></select>
+      <div style="margin-left:192px; margin-right:248px" class="alert alert-danger">need input</div>
+    </div>
     <span data-bind="template:{name:getTemplate(right), data:right}"></span>
-    )
+    <span style="font-size:24px" data-bind="style: {color: color}"><strong>)</strong></span>
 </script>
 <script>
 
+    function get_random_color() {
+        var letters = '0123456789ABCDEF'.split('');
+        var color = '#';
+        for (var i = 0; i < 6; i++ ) {
+            color += letters[Math.round(Math.random() * 15)];
+        }
+        return color;
+    }
+
+    $('body').on('focus',".datepicker", function(){
+    $(this).datepicker();
+    })
+
+    function pickUpErrors(logic, errors)
+    {
+      if (typeof logic.right == 'function')
+      {
+        pickUpErrors(logic.right(), errors);
+      }
+      else if (typeof logic.left == 'function')
+      {
+        pickUpErrors(logic.left(), errors);
+      }
+      if (typeof logic.anyError == 'function')
+      {
+        errors.push(logic.anyError());
+      }
+      return errors;
+    }
+
+    function getQuestion($data)
+    {
+        var data = ko.utils.unwrapObservable($data);
+        if (data instanceof Rando)
+        {
+            return ('randomTmpl');
+        }
+        else
+        {
+            return('questionTmpl');
+        }
+     }
+
     function getTemplate($data) {
         $data = ko.utils.unwrapObservable($data);
-        console.log($data);
         return $data.operator ? 'compound' : 'simple';
+    }
+
+
+    function Bank()
+    {
+        var self = this;
+        self.id = ko.observable('');
+        self.questions = ko.observableArray();
+        self.removeBank = function(bank)
+        {
+            viewModel.banks.remove(self);
+        }
     }
 
 
     function Section(id, type, order, page, visible, questions)
     {
+        var self = this;
         this.type = ko.observable(type);
+        this.types = ['section', 'page'];
         this.id = ko.observable(id);
         this.order = ko.observable(order);
         this.page = ko.observable(page);
+        this.labelerror = ko.computed(function(){
+           if (self.id() == undefined || /^[a-zA-Z0-9]*$/.test(self.id()) == false || self.id().length < 3)
+           {
+               return true;
+           }
+           else
+           {
+               return false;
+           }
+        });
         this.questions = ko.observableArray(questions);
         this.questionNumber = ko.observable(0);
         if (visible != undefined)
@@ -144,19 +373,104 @@
         {
             this.questionNumber(this.questionNumber() + 1);
             var id = this.questionNumber();
-            question = new Question(id, type(), "enter question");
+            if (type() === 'random')
+            {
+                var question = new Rando(id, self)
+            }
+            else
+            {
+                var question = new Question(id, type(), self);
+
+            }
             this.questions.push(question);
         }
 
     };
 
-    function Question(id, type, text, options, value, forloop, caption, if_statement)
+    function Question(id, type, section, text, label, options, value, forloop, caption, if_statement)
     {
         var self  = this;
+        this.section = ko.observable(section);
+        this.show = ko.observable(false);
+        this.edit = ko.observable(true);
         this.id = ko.observable(id);
         this.type = ko.observable(type);
         this.text = ko.observable(text);
+        this.label = ko.observable(label);
+        this.questionerror = ko.computed(function()
+        {
+            if(self.text() == undefined || self.text().length < 3)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        })
+        this.labelerror = ko.computed(function(){
+           if (self.label() == undefined || /^[a-zA-Z0-9]*$/.test(self.label()) == false || self.label().length < 3)
+           {
+               return true;
+           }
+           else
+           {
+               return false;
+           }
+        });
+
+        this.anyError = ko.computed(function(){
+            if (self.labelerror() || self.questionerror())
+            {
+                return true;
+            }
+
+            else
+            {
+                return false;
+            }
+        });
+        this.duplabel = ko.observable(false);
+        this.removeIt = function(question)
+        {
+            self.section().questions.remove(self);
+
+        };
+        this.showIt = function(question)
+        {
+            self.show(true);
+            self.edit(false);
+        };
+
         this._options = ko.observableArray();
+        this.sliderSettings = {
+            min: ko.observable(0),
+            max: ko.observable(100),
+            stepper: ko.observable(1),
+            current: ko.observable(0)
+        };
+        this.minTimeSetting =
+        {
+            min: ko.observable(),
+            times: ko.observableArray(['seconds','minutes']),
+            time: ko.observable(),
+            fulltime: ko.computed(function()
+            {
+               return ('min time: ' + self.minTimeSetting.min() + ' ' + self.minTimeSetting.time())
+            }, this, { deferEvaluation: true })
+        }
+
+        this.maxTimeSetting =
+        {
+            max: ko.observable(),
+            times: ko.observableArray(['seconds','minutes']),
+            time: ko.observable(),
+            fulltime: ko.computed(function()
+            {
+                return ('max time: ' + self.maxTimeSetting.max() + ' ' + self.maxTimeSetting.time())
+            }, this, {deferEvaluation:true})
+        }
+        this.color = ko.observable('solid 5px ' + get_random_color());
         this.options = ko.computed(function() {
             return $.map(self._options(), function(option) {
                 return option.option();
@@ -167,51 +481,272 @@
         this.value = ko.observable(value);
         this.caption = ko.observable(caption);
         this.showmodal = ko.observable(false);
+        this.showmodaltime = ko.observable(false);
+        this.showmodalbank = ko.observable(false);
+        this.selectedBank = ko.observable();
+        this.editTime = function(question)
+        {
+            self.showmodaltime(true);
+        }
         this.showOption = function(question)
         {
             self.showmodal(true);
-        }
+        };
 
         this.addOption = function(question)
         {
             self._options.push({option: ko.observable(' ')});
         };
 
-        this.showmodalif = ko.observable(false);
+        this.removeOption = function(option)
+        {;
+            self._options.remove(option);
+        };
 
+        this.showmodalif = ko.observable(false);
+        this.showmodalslider = ko.observable(false);
+        this.showslider = function(question)
+        {
+            self.showmodalslider(true);
+        };
+        this.showBank = function()
+        {
+            self.showmodalbank(true);
+        }
         this.showlogic = function(question)
         {
-            self.logic(new Statement(self.logic));
+            if (!self.logic()) {
+                self.logic(new Statement(self.logic));
+            }
             self.showmodalif(true);
         };
 
+        this.editIt = function()
+        {
+            self.show(false);
+            self.edit(true);
+        }
+
+        this.removeStatement = function(statement)
+        {
+            self.logic(null);
+        };
+
+        this.addToBank = function()
+        {
+            <!--get the bank name and add this question to it!-->
+            if (self.selectedBank())
+                {
+                  var bank = ko.utils.arrayFirst(viewModel.banks(), function(bank) {
+                   return bank.id() === self.selectedBank();
+                })
+                if (!$.inArray(self, bank.questions()))
+                {
+
+                    bank.questions().push(self);
+                }
+            }
+        }
+
+    };
+
+    <!--gotta make some prototype functions, but I still do want a ref to the parent?-->
+
+    function Rando(id, section)
+    {
+        var self = this;
+        this.bank = ko.observable();
+        this.question = ko.observable();
+        this.section = section;
+        this.show = ko.observable(false);
+        this.edit = ko.observable(true);
+        this.showRando = function()
+        {
+             var bank = ko.utils.arrayFirst(viewModel.banks(), function(bank) {
+               return bank.id() === self.bank();
+            });
+            self.question(bank.questions()[Math.floor(Math.random() * bank.questions().length)]);
+            self.show(true);
+            self.edit(false);
+        }
+        this.editIt = function()
+        {
+            self.show(false);
+            self.edit(true);
+        }
     };
 
     function Compound(statement, whatami)
     {
         var self = this;
+        self.whatami = whatami;
+        self.color = ko.observable(get_random_color());
         self.operator = ko.observableArray(['OR', 'AND']);
-        self.left = ko.observable(statement);
-        self.left(new Statement(self.left));
+        self.opSelected = ko.observable();
+
+        self.left = ko.observable();
+        statement.whatami = self.left;
+        self.left(statement);
         self.right = ko.observable();
         self.right(new Statement(self.right));
+
+
+        this.removeStatement = function(statement)
+        {
+            if (statement == self.right())
+            {
+                var lt = self.left();
+                lt.whatami = self.whatami;
+                self.whatami(lt);
+
+            }
+
+            else if (statement == self.left())
+            {
+                var rt = self.right();
+                rt.whatami = self.whatami;
+                self.whatami(rt);
+            }
+        };
+
+        self.compoundError = ko.computed(function()
+        {
+          if (self.opSelected() == undefined)
+          {
+            return true;
+          }
+          else
+          {
+            return false;
+          }
+        });
     };
+
 
     function Statement(whatami)
     {
         var self = this;
         self._id = ko.observable();
+        self.whatami = whatami;
         self.compare = ko.observable();
-        self.logics = ['less than', 'equal to', 'greater than', 'contains'];
         self.output = ko.observable();
-        self.turnToCompound = function(statement)
+        self.selectedQuestion = ko.observable();
+        self.logics = ['less than', 'equal to', 'greater than', 'contains'];
+        self.selectedError = ko.computed(function()
         {
-            whatami(new Compound(self));
-            console.log(self);
-        };
+            if (self.selectedQuestion() == undefined)
+            {
+                return true;
+            }
+
+            else
+            {
+                return false;
+            }
+        });
+        self.compareError = ko.computed(function()
+        {
+            if (self.compare() == undefined)
+            {
+                return true;
+            }
+
+            else
+            {
+                return false;
+            }
+        });
+        self.outputError = ko.computed(function(){
+           if (self.output() == undefined)
+           {
+               return true;
+           }
+           else
+           {
+               return false;
+           }
+        });
+
+        self.anyError = ko.computed(function(){
+          if(self.selectedError() || self.compareError() || self.outputError())
+          {
+            return true;
+          }
+          else
+          {
+            return false;
+          }
+        });
 
     };
 
+    Statement.prototype = {
+
+        turnToCompound: function(statement)
+        {
+            var compound = new Compound(this, this.whatami);
+            compound.whatami(compound);
+        }
+
+    };
+
+    Section.prototype.toJSON = function()
+    {
+        var copy = ko.toJS(this);
+        delete copy.labelerror;
+        delete copy.visible;
+        delete copy.questionNumber;
+        delete copy.types;
+        return copy;
+    };
+
+    Question.prototype.toJSON = function()
+    {
+        var copy = ko.toJS(this);
+        delete copy.section;
+        delete copy.show;
+        delete copy.edit;
+        delete copy.questionerror;
+        delete copy.labelerror;
+        delete copy.duplabel;
+        delete copy.color;
+        delete copy.showmodal;
+        delete copy.showmodaltime;
+        delete copy.showmodalbank;
+        delete copy.showmodalif;
+        delete copy.showmodalslider;
+        delete copy._options;
+        copy.minTimeSetting = copy.minTimeSetting.fulltime;
+        copy.maxTimeSetting = copy.maxTimeSetting.fulltime;
+        delete copy.id;
+        if (copy.type != 'slider' )
+        {
+            delete copy.sliderSettings;
+        }
+        if (copy.type != 'radio' || copy.type != 'select')
+        {
+            delete copy.options;
+        }
+        return copy;
+    };
+
+
+    Statement.prototype.toJSON = function()
+    {
+      var copy = ko.toJS(this);
+      delete copy.whatami;
+      delete copy.logics;
+      return copy;
+    };
+
+    Compound.prototype.toJSON = function()
+    {
+        var copy = ko.toJS(this);
+        delete copy.whatami;
+        delete copy.color;
+        delete copy.operator;
+        return copy;
+    };
 
 
     var stringTemplateSource = function (template) {
@@ -230,10 +765,41 @@
     var templates = {
         textarea: '<textarea data-bind="value:value"></textarea>',
         textfield: '<input type="text" data-bind="value:value" />',
-        select: '<select data-bind="options: options, value: value, optionsCaption: caption">' +
-                '</select><button data-bind="click:showOption">create option</button>',
-        checkbox: '<input type="checkbox" data-bind="checked:value" />'
+        select: '<span data-bind="if:edit"><button data-bind="click:showOption" class="btn btn-info">create options</button></span>' +
+                ' <select data-bind="options: options, value: value, optionsCaption: caption">' +
+                '</select>',
+        checkbox: '<input type="checkbox" data-bind="checked:value" />',
+        radio: '<span data-bind="if:edit"><button data-bind="click:showOption" class="btn btn-info">create options</button></span>' +
+                '<span data-bind="foreach:_options">' +
+                '<div><input type="radio" name="optionsGroup" data-bind="attr: {value: option}">' +
+                '<span data-bind="text: option"></span></div></span>',
+        slider: '<div class="slider" style="margin: 25px" data-bind="slider: $data.sliderSettings.current, sliderOptions: {min: $data.sliderSettings.min, max: $data.sliderSettings.max, stepper: $data.sliderSettings.stepper}"></div>' +
+                '<span data-bind="if:edit"><button data-bind="click:showslider" class="btn btn-info">edit slider settings</button></span>',
+        date: '<input type="text" class="datepicker">'
+
     };
+
+    var randoTemps =
+    {
+        textarea: '<textarea data-bind="value:value"></textarea>',
+        textfield: '<input type="text" data-bind="value:value" />',
+        select: ' <select data-bind="options: options, value: value, optionsCaption: caption">' +
+                '</select>',
+        checkbox: '<input type="checkbox" data-bind="checked:value" />',
+        radio:  '<span data-bind="foreach:_options">' +
+                '<div><input type="radio" name="optionsGroup" data-bind="attr: {value: option}">' +
+                '<span data-bind="text: option"></span></div></span>',
+        slider: '<div class="slider" style="margin: 25px" data-bind="slider: $data.sliderSettings.current, sliderOptions: {min: $data.sliderSettings.min, max: $data.sliderSettings.max, stepper: $data.sliderSettings.stepper}"></div>',
+        date: '<input type="text" class="datepicker">'
+    }
+
+    ko.bindingHandlers.randoItem =
+    {
+         init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+            var options = ko.utils.unwrapObservable(valueAccessor());
+            ko.renderTemplate(randoTemps[options.type()], options, { templateEngine: stringTemplateEngine }, element, 'replaceNode');
+        }
+    }
 
     ko.bindingHandlers.item = {
         init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
@@ -247,6 +813,48 @@
     var unwrap = ko.utils.unwrapObservable;
 
     ko.bindingHandlers.modal = {
+        init: function (element, valueAccessor) {
+            var ques = valueAccessor();
+            $(element).modal({show: false}).on("hidden.bs.modal", function()
+            {
+                ques.showmodal(false);
+            });
+        },
+        update: function (element, valueAccessor) {
+            var value = valueAccessor();
+            if (value.showmodal()) {
+                $(element).modal('show');
+
+            }
+            else
+            {
+                $(element).modal('hide');
+            }
+        }
+    };
+
+    ko.bindingHandlers.modalslide = {
+        init: function (element, valueAccessor) {
+            var ques = valueAccessor();
+            $(element).modal({show: false}).on("hidden.bs.modal", function()
+            {
+                ques.showmodalslider(false);
+            });
+        },
+        update: function (element, valueAccessor) {
+            var value = valueAccessor();
+            if (value.showmodalslider()) {
+                $(element).modal('show');
+
+            }
+            else
+            {
+                $(element).modal('hide');
+            }
+        }
+    };
+
+    ko.bindingHandlers.modalslider = {
         init: function (element, valueAccessor) {
             var ques = valueAccessor();
             $(element).modal({show: false}).on("hidden.bs.modal", function()
@@ -288,6 +896,47 @@
         }
     };
 
+    ko.bindingHandlers.modaltime = {
+        init: function (element, valueAccessor) {
+            var ques = valueAccessor();
+            $(element).modal({show: false}).on("hidden.bs.modal", function()
+            {
+                ques.showmodaltime(false);
+            });
+        },
+        update: function (element, valueAccessor) {
+            var value = valueAccessor();
+            if (value.showmodaltime()) {
+                $(element).modal('show');
+
+            }
+            else
+            {
+                $(element).modal('hide');
+            }
+        }
+    };
+
+    ko.bindingHandlers.modalbank = {
+        init: function (element, valueAccessor) {
+            var ques = valueAccessor();
+            $(element).modal({show: false}).on("hidden.bs.modal", function()
+            {
+                ques.showmodalbank(false);
+            });
+        },
+        update: function (element, valueAccessor) {
+            var value = valueAccessor();
+            if (value.showmodalbank()) {
+                $(element).modal('show');
+
+            }
+            else
+            {
+                $(element).modal('hide');
+            }
+        }
+    };
 
 
     ko.bindingHandlers.droppable = {
@@ -311,52 +960,129 @@
             value = value.data || value;
             //set meta-data
             dataSet(element, DRAGKEY, value);
-            $(element).draggable({'revert':true});
+            $(element).draggable({'revert':true, cancel:'.slider'});
+
         }
     };
 
-
     ko.bindingHandlers.visibleAndSelect = {
-        update: function(element, valueAccessor) {
+        update:function (element, valueAccessor) {
             ko.bindingHandlers.visible.update(element, valueAccessor);
             if (valueAccessor()) {
-                setTimeout(function() {
+                setTimeout(function () {
                     $(element).find("input").focus().select();
                 }, 0); //new tasks are not in DOM yet
             }
         }
     };
 
-    ko.bindingHandlers.sortableList = {
-        init: function(element, valueAccessor, allBindingsAccessor, data, context)
-        {
-            var list = valueAccessor();
-            $(element).sortable({
-                update: function(event, ui)
-                {
-                    var item = ui.item.tmplItem().data;
 
-                    var position = ko.utils.arrayIndexOf(ui.item.parent().children(), ui.item[0]);
-                    if (position >= 0)
-                    {
-                        list().remove(item);
-                        list().splice(position, 0, item);
-                    }
-                }
-            });
+    ko.bindingHandlers.slider = {
+      init: function (element, valueAccessor, allBindingsAccessor) {
+        var options = allBindingsAccessor().sliderOptions || {};
+        options = {
+            max: options.max(),
+            min: options.min(),
+            stepper: options.stepper()
         }
+        $(element).slider(options);
+        ko.utils.registerEventHandler(element, "slidechange", function (event, ui) {
+            var observable = valueAccessor();
+            observable(ui.value);
+        });
+        ko.utils.domNodeDisposal.addDisposeCallback(element, function () {
+            $(element).slider("destroy");
+        });
+        ko.utils.registerEventHandler(element, "slide", function (event, ui) {
+            var observable = valueAccessor();
+            observable(ui.value);
+        });
+      },
+      update: function (element, valueAccessor, allBindingsAccessor) {
+        var value = ko.utils.unwrapObservable(valueAccessor());
+        var options = allBindingsAccessor().sliderOptions || {};
+        if (isNaN(value)) value = 0;
+        if (options)
+        {
+            var step = parseInt(options.stepper());
+            var min = parseInt(options.min());
+            var max = parseInt(options.max());
+            if (value < min)
+            {
+                valueAccessor()(min);
+            }
+            if (value > max)
+            {
+                valueAccessor()(max);s
+            }
+            $(element).slider('option', 'min', min);
+            $(element).slider('option', 'max', max);
+            $(element).slider('option', 'step', step);
+        }
+        $(element).slider("value", value);
+
+      }
     };
 
     function ViewModel() {
 
         var self = this;
         self.pages = ko.observable(1);
-        self.textarea= ko.observable('textarea');
-        self.textfield= ko.observable('textfield');
-        self.select= ko.observable('select');
-        self.slider= ko.observable('slider');
-        self.radio=ko.observable('radio');
+        self.textarea = ko.observable('textarea');
+        self.textfield = ko.observable('textfield');
+        self.select = ko.observable('select');
+        self.slider = ko.observable('slider');
+        self.radio = ko.observable('radio');
+        self.random = ko.observable('random');
+        self.date = ko.observable('date');
         self.sections= ko.observableArray();
+        self.errors =  ko.observableArray();
+        self.banks = ko.observableArray();
+        self.bankNames = ko.computed(function(){
+           return $.map(self.banks(), function(bank)
+           {
+               return bank.id();
+           }) ;
+        });
+        self.sectionerrors = ko.computed(function()
+        {
+           return $.map(self.sections(), function(section)
+            {
+               return section.labelerror();
+            });
+        });
+        self.questionerrors = ko.computed(function()
+        {
+            return $.map(self.sections(), function(section)
+            {
+                return $.map(section.questions(), function(question)
+               {
+                 return question.anyError();
+               });
+            });
+        });
+        self.statementErrors = ko.observableArray();
+        var errors = []
+        self.getErrors = ko.computed(function()
+        {
+          return $.map(self.sections(), function(section)
+          {
+            return $.map(section.questions(), function(question)
+            {
+                if (question.logic())
+                {
+                  return pickUpErrors(question.logic(), errors);
+                }
+            });
+          });
+        });
+        self.errors = ko.observableArray();
+        self.errorIt = ko.computed(function()
+        {
+            self.errors(self.sectionerrors().concat(self.questionerrors()));
+        });
+
+
         self.operators = ['and', 'or'];
         self.logics = ['less than', 'equal to', 'greater than', 'contains']
         self.questionNames = ko.computed(function()
@@ -365,7 +1091,14 @@
             {
                 return $.map(section.questions(), function(question)
                 {
-                    return question.text();
+                    if (question instanceof Rando)
+                    {
+                        return 'random'
+                    }
+                    else
+                    {
+                        return question.text();
+                    }
                 });
             });
         });
@@ -378,22 +1111,48 @@
         self.createSection= function()
         {
             self.pages(self.pages() + 1);
-            var section = new Section(self.pages());
+            var section = new Section();
             self.sections.push(section);
         };
 
+        self.errorExists = ko.computed(function()
+        {
+            if (self.errors().indexOf(true) > -1)
+           {
+               return true;
+           }
+           else
+           {
+               return false;
+           }
+        });
+        self.submitError = ko.observable(false);
+        self.submitMe = function()
+        {
+            if (self.errorExists())
+            {
+                self.submitError(true);
+            }
+            else
+            {
+                self.submitError(false);
+            }
+        }
+
+        self.createBank= function()
+        {
+            var bank = new Bank();
+            self.banks.push(bank);
+        }
+
     }
     var viewModel = new ViewModel();
-    var base = new Section('Page1');
+    var base = new Section();
     viewModel.sections.push(base);
 
     ko.applyBindings(viewModel);
 
-    function applyLogic(logic)
-    {
-
-    };
-
+//    var jsonData = ko.toJSON(viewModel.sections());
 
 </script>
 </body>

@@ -237,7 +237,7 @@
     <script id='randomTmpl' type='text/html'>
          <div class="form-group" data-bind="if:$data.edit, attr:{for:$data.id}" style="overflow:hidden">
             <button class="btn btn-danger" data-bind="click:$data.removeIt, attr:{for:$data.id}" style="float: right;">remove</button>
-            <button class="btn btn-success" data-bind="click:$data.showRando, attr:{for:$data.id}" style="float: right;">display</button>
+            <button class="btn btn-success" data-bind="click:$data.showRando, attr:{for:$data.id},visible:displayAble()" style="float: right;">display</button>
             from which bank do you want pick a question from?
              <select data-bind='options:$root.bankNames, optionsCaption: "Select...", value:bank'></select>
          </div>
@@ -282,6 +282,9 @@
 <script>
 
     function get_random_color() {
+        
+        // returns a random color so that logics are grouped together
+        
         var letters = '0123456789ABCDEF'.split('');
         var color = '#';
         for (var i = 0; i < 6; i++ ) {
@@ -296,6 +299,9 @@
 
     function pickUpErrors(logic, errors)
     {
+      
+      // pick up errors for logic statements. called when the logic modal is dismissed
+      
       for (key in logic)
       {
         if (key == 'left')
@@ -329,6 +335,10 @@
 
     function getQuestion($data)
     {
+        
+        // evaluates whether a question is a true question, or a random question that pulls
+        // questions from a question bank. returns the appropriate template
+        
         var data = ko.utils.unwrapObservable($data);
         if (data instanceof Rando)
         {
@@ -348,6 +358,9 @@
 
     function Bank()
     {
+        
+        // creates a question bank object
+        
         var self = this;
         self.id = ko.observable('');
         self.questions = ko.observableArray();
@@ -360,6 +373,14 @@
 
     function Section(id, type, order, page, visible, questions)
     {
+        
+        // creates a section object
+        // id = id of the section
+        // type = section or page
+        // order = random or regular ordering ... still needs to be impemented
+        // visible = 
+        // questions = the questions in the section
+        
         var self = this;
         this.type = ko.observable(type);
         this.types = ['section', 'page'];
@@ -407,6 +428,19 @@
 
     function Question(id, type, section, text, label, options, value, forloop, caption, if_statement)
     {
+        
+        // returns a question object
+        // id = id
+        // type = question or random
+        // section = the section the quesiton is part of
+        // text = the question text
+        // label = the label
+        // options = options for radio or select questions
+        // value = the answer
+        // forloop = for displaying questions multiple times. Needs to be implemented
+        // caption = caption for radio or select
+        // if_statement = logic statements
+        
         var self  = this;
         this.section = ko.observable(section);
         this.show = ko.observable(false);
@@ -558,10 +592,9 @@
                 {
                   var bank = ko.utils.arrayFirst(viewModel.banks(), function(bank) {
                    return bank.id() === self.selectedBank();
-                })
-                if (!$.inArray(self, bank.questions()))
+                });
+                if ($.inArray(self, bank.questions()) < 0)
                 {
-
                     bank.questions().push(self);
                 }
             }
@@ -569,22 +602,39 @@
 
     };
 
-    <!--gotta make some prototype functions, but I still do want a ref to the parent?-->
 
     function Rando(id, section)
     {
+        
+        // returns a random question object
+        // id = id
+        // section = reference to the section the random question is part of
+        
         var self = this;
         this.bank = ko.observable();
         this.question = ko.observable();
         this.sectionId = ko.observable(section.id()); //need to check if this works.
         this.show = ko.observable(false);
         this.edit = ko.observable(true);
+        this.displayAble = ko.computed(function()
+        {
+          if (self.bank())
+          {
+            return true;
+          }
+          else
+          {
+            return false;
+          }
+        });
         this.showRando = function()
         {
              var bank = ko.utils.arrayFirst(viewModel.banks(), function(bank) {
                return bank.id() === self.bank();
             });
+            console.log(bank.questions());
             self.question(bank.questions()[Math.floor(Math.random() * bank.questions().length)]);
+            console.log(self.question());
             self.show(true);
             self.edit(false);
         }
@@ -597,6 +647,11 @@
 
     function Compound(statement, whatami)
     {
+        
+        // returns a compound if statement. i.e., IF X AND Y
+        // statement = the original simple statement
+        // whatami = compound or simple. for turning simple statements into compounds.
+        
         var self = this;
         self.whatami = whatami;
         self.color = ko.observable(get_random_color());
@@ -644,6 +699,10 @@
 
     function Statement(whatami)
     {
+        // returns a simple if statement
+        // whatami = reference to the type of statement. for converting simple to 
+        // compound and vice versa
+
         var self = this;
         self._id = ko.observable();
         self.whatami = whatami;
@@ -703,6 +762,7 @@
 
         turnToCompound: function(statement)
         {
+            // turns a simple statement into a compund
             var compound = new Compound(this, this.whatami);
             compound.whatami(compound);
         }
@@ -711,6 +771,8 @@
 
     Section.prototype.toJSON = function()
     {
+        // converts sections to appropriate JSON format for submission
+
         var copy = ko.toJS(this);
         delete copy.labelerror;
         delete copy.visible;
@@ -720,7 +782,10 @@
     };
 
     Question.prototype.toJSON = function()
+
     {
+        // converts questions to appropriate JSON format for submission
+
         var copy = ko.toJS(this);
         delete copy.section;
         delete copy.show;
@@ -752,6 +817,9 @@
 
     Statement.prototype.toJSON = function()
     {
+      
+      // converts statements to appropriate JSON format for submission
+
       var copy = ko.toJS(this);
       delete copy.whatami;
       delete copy.logics;
@@ -760,6 +828,9 @@
 
     Compound.prototype.toJSON = function()
     {
+        
+        // converts compounds to appropriate JSON format for submission
+
         var copy = ko.toJS(this);
         delete copy.whatami;
         delete copy.color;
@@ -830,6 +901,8 @@
     var DRAGKEY = "ko_dragItem";
     var dataSet = ko.utils.domData.set;
     var unwrap = ko.utils.unwrapObservable;
+
+// custom bindings for all modal dialogs
 
     ko.bindingHandlers.modal = {
         init: function (element, valueAccessor) {
@@ -913,7 +986,6 @@
                 if (value.logic())
                 {
                   var logicErrors = pickUpErrors(value.logic(), []);
-                  console.log(logicErrors);
                 }
                 $(element).modal('hide');
             }
@@ -1081,11 +1153,8 @@
             {
                 return $.map(section.questions(), function(question)
                {
-                 console.log(question);
-                 console.log('ahh');
                  if (question instanceof Rando)
                  {
-                  console.log('do we get it?');
                   return;
                  }
                  else
@@ -1113,9 +1182,6 @@
                 {
                     if (question instanceof Rando)
                     {
-                        console.log('what about here?');
-                        console.log(viewModel);
-                        console.log(ko.toJS(viewModel));
                         return 'random'
                     }
                     else

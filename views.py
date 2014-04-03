@@ -144,7 +144,9 @@ def form():
 
 @app.route('/create')
 def create():
-    return render_template('create_form.html')
+    form_data =
+    [{"types":["section","page"],"labelerror":true,"questions":[],"questionNumber":0,"visible":true}]
+    return render_template('create_form.html', form_data = form_data)
 
 @app.route('/logic')
 def logic():

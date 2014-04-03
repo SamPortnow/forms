@@ -12,7 +12,7 @@
         {
             min-height:100px;
             border:solid 10px #c3c7bd;
-            padding:5px;
+            padding-left:15px;
         }
 
         .holder
@@ -40,46 +40,43 @@
            <button class="btn btn-success" data-bind="click:createBank">create question bank</button>
         </div>
     <hr>
-    <div data-bind="foreach:sections">
-        <div class="row">
-            <div class="col-sm-4">
-            <label>section label</label>
-            <input data-bind="value:id">
-            <div class="alert alert-danger" data-bind="visible:$data.labelerror">need a label longer than 3 characters with no spaces or special characters</div>
-            <label>type of section</label>
-            <select data-bind="options:types, optionsCaption: 'select one...', value:type"></select>
-            </div>
+    <div class="sections" data-bind="sortable:{data:sections, connectClass:'sections'}">
+        <div class="content col-sm-8" data-bind="droppable: $data">
+         <div class="row">
+              <label>section label</label>
+              <input data-bind="value:id">
+              <span style="color:red; font-size:10px" data-bind="visible:$data.labelerror">min length 3. no special characters</span>
+              <label>type</label>
+              <select data-bind="options:types, optionsCaption: 'select one...', value:type"></select>
+          </div>
+          <div class="container" data-bind="sortable: {template:getQuestion, data:questions}">
+          </div>
         </div>
-        <div class="row">
-            <div class="content col-sm-8" data-bind="droppable: $data">
-            <div class="container" data-bind="sortable: {template:getQuestion, data:questions}">
-            </div>
-            </div>
-            <div class="options col-sm-2">
-                <ul class>
-                    <li data-bind="draggable:{data:$root.textarea}" id="textarea">text area</li>
-                    <hr>
-                    <li data-bind="draggable:{data:$root.textfield}" id="textfield">text field</li>
-                    <hr>
-                    <li data-bind="draggable:{data:$root.select}" id="select">select</li>
-                    <hr>
-                    <li data-bind="draggable:{data:$root.slider}" id="slider">slider</li>
-                    <hr>
-                    <li data-bind="draggable:{data:$root.radio}" id="radio">radio</li>
-                    <hr>
-                    <li data-bind="draggable:{data:$root.date}" id="date">date</li>
-                    <hr>
-                    <li data-bind="draggable:{data:$root.random}" id="random">random</li>
-                </ul>
-            </div>
-        </div>
+    </div>
+    <div class="col-sm-2" style="float:right;">
+      <div class="options col-sm-2">
+          <ul class>
+              <li data-bind="draggable:{data:$root.textarea}" id="textarea">text area</li>
+              <hr>
+              <li data-bind="draggable:{data:$root.textfield}" id="textfield">text field</li>
+              <hr>
+              <li data-bind="draggable:{data:$root.select}" id="select">select</li>
+              <hr>
+              <li data-bind="draggable:{data:$root.slider}" id="slider">slider</li>
+              <hr>
+              <li data-bind="draggable:{data:$root.radio}" id="radio">radio</li>
+              <hr>
+              <li data-bind="draggable:{data:$root.date}" id="date">date</li>
+              <hr>
+              <li data-bind="draggable:{data:$root.random}" id="random">random</li>
+          </ul>
+      </div>
     </div>
     <div class="row">
         <div class="text-center">
             <button data-bind="click:$root.createSection" class="btn btn-primary col-sm-8">create new section</button>
         </div>
     </div>
-    <br>
     <br>
     <hr>
     <div class="row">
@@ -123,6 +120,10 @@
                          <button data-bind="click:$data.showlogic" class="btn btn-primary">add logic</button>
                         <button class="btn btn-warning" data-bind="click:$data.editTime">edit time</button>
                     </div>
+              <div>
+                <button class="btn btn-success" data-bind="click:showfor">create a for loop?</button>
+              </div>
+
               <div class="modal fade" data-bind="visible: showmodal, modal:$data" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
                   <div class="modal-content">
@@ -136,6 +137,35 @@
                        </div>
                     </div>
                       <button data-bind='click:addOption' class="btn btn-success">add option</button>
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                  </div>
+                </div>
+
+              <div class="modal fade" data-bind="visible: showmodalfor, modalfor:$data" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                      <h4 class="modal-title" >CREATE A FOR LOOP</h4>
+                    </div>
+                    <div class="modal-body">
+                       <div data-bind="if:forloop">
+                            <span data-bind="with:forloop">
+                            How many times do you want this question displayed?
+                            <input data-bind="value:times"/>
+                            <button type="button" button class="btn btn-default" data-bind="click:adding">submit</button>
+                            <div data-bind="foreach: replacements">
+                                <div>
+                                  <button class="btn btn-danger btn-sm" data-bind="click:$parent.remove">X</button>
+                                  Pass <span data-bind="text:$index() + 1"></span>: replace 
+                                  <input data-bind="value:replace"> with <input data-bind="value:replacement">
+                                  <button class="btn btn-danger btn-sm">NA</button>
+                                </div>
+                            </div>
+                            </span>
+                       </div>
+                    </div>
                       <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                     </div>
                   </div>
@@ -296,6 +326,35 @@
     $('body').on('focus',".datepicker", function(){
     $(this).datepicker();
     })
+
+    function getLogics(logic)
+    {
+
+        if ('left' && 'right' in logic)
+        {
+
+          if ('left' in logic)
+          {
+            logic.left = getLogics(logic.left);
+          }
+
+          if ('right' in logic)
+          {
+            logic.right = getLogics(logic.right);
+          }
+
+        }
+        if ('compare' in logic)
+        {
+         var statement = new Statement(logic);
+         return new Statement(statement, logic._id, logic.compare, logic.output, logic.selectedQuestion, logic.logics)
+        }
+        if ('opSelected' in logic)
+        {
+          var compound = new Compound(logic.left, logic.whatami);
+          return new Compound(logic.left, compound, logic.color, logic.operator, logic.left, logic.right, logic.opSelected);
+        }
+    }
 
     function pickUpErrors(logic, errors)
     {
@@ -530,7 +589,8 @@
             });
         });
         this.selected = ko.observable();
-        this.logic = ko.observable();
+        this.logic = ko.observable(if_statement);
+        this.forloop = ko.observable();
         this.value = ko.observable(value);
         this.caption = ko.observable(caption);
         this.showmodal = ko.observable(false);
@@ -557,6 +617,15 @@
         };
 
         this.showmodalif = ko.observable(false);
+        this.showmodalfor = ko.observable(false);
+        this.showfor = function()
+        {
+          if (! self.forloop())
+          {
+            self.forloop(new forLoop());
+          }
+          self.showmodalfor(true);
+        }
         this.showmodalslider = ko.observable(false);
         this.showslider = function(question)
         {
@@ -602,6 +671,38 @@
 
     };
 
+    function forLoop()
+    {
+      var self = this;
+      self.times = ko.observable();
+      self.replacements = ko.observableArray();
+      this.adding = function()
+      {
+        if (0 < self.replacements().length)
+        {
+          self.replacements.removeAll();
+        }
+        for (var i = 0; i < self.times(); i++)
+        {
+
+          var replacement = new theReplacement();
+          self.replacements.push(replacement);
+        }
+
+      };
+      this.remove = function(replacement)
+      {
+        self.replacements.remove(replacement);
+      };
+    };
+
+    function theReplacement()
+    {
+      var self = this;
+      self.replace = ko.observable();
+      self.replacement = ko.observable();
+    }
+
 
     function Rando(id, section)
     {
@@ -632,9 +733,7 @@
              var bank = ko.utils.arrayFirst(viewModel.banks(), function(bank) {
                return bank.id() === self.bank();
             });
-            console.log(bank.questions());
             self.question(bank.questions()[Math.floor(Math.random() * bank.questions().length)]);
-            console.log(self.question());
             self.show(true);
             self.edit(false);
         }
@@ -645,25 +744,31 @@
         }
     };
 
-    function Compound(statement, whatami)
+    function Compound(statement, whatami, color, operator, left, right, opSelected)
     {
         
         // returns a compound if statement. i.e., IF X AND Y
         // statement = the original simple statement
         // whatami = compound or simple. for turning simple statements into compounds.
-        
         var self = this;
         self.whatami = whatami;
         self.color = ko.observable(get_random_color());
         self.operator = ko.observableArray(['OR', 'AND']);
-        self.opSelected = ko.observable();
-
+        self.opSelected = ko.observable(opSelected);
         self.left = ko.observable();
+        self.right = ko.observable();
         statement.whatami = self.left;
         self.left(statement);
-        self.right = ko.observable();
-        self.right(new Statement(self.right));
-
+        if (typeof right !== 'undefined')
+        {
+          right.whatami = self.right;
+          self.right(right);
+        }
+        else
+        {
+          self.right = ko.observable();
+          self.right(new Statement(self.right));
+        }
 
         this.removeStatement = function(statement)
         {
@@ -697,18 +802,18 @@
     };
 
 
-    function Statement(whatami)
+    function Statement(whatami, _id, compare, output, selectedQuestion, logics)
     {
         // returns a simple if statement
         // whatami = reference to the type of statement. for converting simple to 
         // compound and vice versa
 
         var self = this;
-        self._id = ko.observable();
+        self._id = ko.observable(_id);
         self.whatami = whatami;
-        self.compare = ko.observable();
-        self.output = ko.observable();
-        self.selectedQuestion = ko.observable();
+        self.compare = ko.observable(compare);
+        self.output = ko.observable(output);
+        self.selectedQuestion = ko.observable(selectedQuestion);
         self.logics = ['less than', 'equal to', 'greater than', 'contains'];
         self.selectedError = ko.computed(function()
         {
@@ -769,17 +874,17 @@
 
     };
 
-    Section.prototype.toJSON = function()
-    {
-        // converts sections to appropriate JSON format for submission
+    // Section.prototype.toJSON = function()
+    // {
+    //     // converts sections to appropriate JSON format for submission
 
-        var copy = ko.toJS(this);
-        delete copy.labelerror;
-        delete copy.visible;
-        delete copy.questionNumber;
-        delete copy.types;
-        return copy;
-    };
+    //     var copy = ko.toJS(this);
+    //     delete copy.labelerror;
+    //     delete copy.visible;
+    //     delete copy.questionNumber;
+    //     delete copy.types;
+    //     return copy;
+    // };
 
     Question.prototype.toJSON = function()
 
@@ -788,31 +893,41 @@
 
         var copy = ko.toJS(this);
         delete copy.section;
-        delete copy.show;
-        delete copy.edit;
-        delete copy.questionerror;
-        delete copy.labelerror;
-        delete copy.duplabel;
-        delete copy.color;
-        delete copy.showmodal;
-        delete copy.showmodaltime;
-        delete copy.showmodalbank;
-        delete copy.showmodalif;
-        delete copy.showmodalslider;
-        delete copy._options;
-        copy.minTimeSetting = copy.minTimeSetting.fulltime;
-        copy.maxTimeSetting = copy.maxTimeSetting.fulltime;
-        delete copy.id;
-        if (copy.type != 'slider' )
-        {
-            delete copy.sliderSettings;
-        }
-        if (copy.type != 'radio' || copy.type != 'select')
-        {
-            delete copy.options;
-        }
-        return copy;
-    };
+        return copy
+    }
+
+    // Question.prototype.toJSON = function()
+
+    // {
+    //     // converts questions to appropriate JSON format for submission
+
+    //     var copy = ko.toJS(this);
+    //     delete copy.section;
+    //     delete copy.show;
+    //     delete copy.edit;
+    //     delete copy.questionerror;
+    //     delete copy.labelerror;
+    //     delete copy.duplabel;
+    //     delete copy.color;
+    //     delete copy.showmodal;
+    //     delete copy.showmodaltime;
+    //     delete copy.showmodalbank;
+    //     delete copy.showmodalif;
+    //     delete copy.showmodalslider;
+    //     delete copy._options;
+    //     copy.minTimeSetting = copy.minTimeSetting.fulltime;
+    //     copy.maxTimeSetting = copy.maxTimeSetting.fulltime;
+    //     delete copy.id;
+    //     if (copy.type != 'slider' )
+    //     {
+    //         delete copy.sliderSettings;
+    //     }
+    //     if (copy.type != 'radio' || copy.type != 'select')
+    //     {
+    //         delete copy.options;
+    //     }
+    //     return copy;
+    // };
 
 
     Statement.prototype.toJSON = function()
@@ -822,7 +937,7 @@
 
       var copy = ko.toJS(this);
       delete copy.whatami;
-      delete copy.logics;
+      //delete copy.logics;
       return copy;
     };
 
@@ -833,8 +948,8 @@
 
         var copy = ko.toJS(this);
         delete copy.whatami;
-        delete copy.color;
-        delete copy.operator;
+        //delete copy.color;
+        //delete copy.operator;
         return copy;
     };
 
@@ -861,8 +976,8 @@
         checkbox: '<input type="checkbox" data-bind="checked:value" />',
         radio: '<span data-bind="if:edit"><button data-bind="click:showOption" class="btn btn-info">create options</button></span>' +
                 '<span data-bind="foreach:_options">' +
-                '<div><input type="radio" name="optionsGroup" data-bind="attr: {value: option}">' +
-                '<span data-bind="text: option"></span></div></span>',
+                '<span><input type="radio" name="optionsGroup" data-bind="attr: {value: option}">' +
+                '<span data-bind="text: option"></span></span></span>',
         slider: '<div class="slider" style="margin: 25px" data-bind="slider: $data.sliderSettings.current, sliderOptions: {min: $data.sliderSettings.min, max: $data.sliderSettings.max, stepper: $data.sliderSettings.stepper}"></div>' +
                 '<span data-bind="if:edit"><button data-bind="click:showslider" class="btn btn-info">edit slider settings</button></span>',
         date: '<input type="text" class="datepicker">'
@@ -915,6 +1030,27 @@
         update: function (element, valueAccessor) {
             var value = valueAccessor();
             if (value.showmodal()) {
+                $(element).modal('show');
+
+            }
+            else
+            {
+                $(element).modal('hide');
+            }
+        }
+    };
+
+    ko.bindingHandlers.modalfor = {
+        init: function (element, valueAccessor) {
+            var ques = valueAccessor();
+            $(element).modal({show: false}).on("hidden.bs.modal", function()
+            {
+                ques.showmodalfor(false);
+            });
+        },
+        update: function (element, valueAccessor) {
+            var value = valueAccessor();
+            if (value.showmodalfor()) {
                 $(element).modal('show');
 
             }
@@ -1055,7 +1191,7 @@
             var value = unwrap(valueAccessor()) || {},
             value = value.data || value;
             //set meta-data
-            dataSet(element, DRAGKEY, value);
+            dataSet(element, DRAGKEY, value); 
             $(element).draggable({'revert':true, cancel:'.slider'});
 
         }
@@ -1236,9 +1372,47 @@
 
     }
     var viewModel = new ViewModel();
-    var base = new Section();
-    viewModel.sections.push(base);
-    ko.applyBindings(viewModel);
+    var form_data = [{"types":["section","page"],"labelerror":true,"questions":[{"show":false,"edit":true,"id":1,"type":"textarea","text":"How","label":"Are","questionerror":false,"labelerror":false,"anyError":false,"duplabel":false,"_options":[],"sliderSettings":{"min":0,"max":100,"stepper":1,"current":0},"minTimeSetting":{"times":["seconds","minutes"],"time":"seconds","fulltime":"min time: undefined seconds"},"maxTimeSetting":{"times":["seconds","minutes"],"time":"seconds","fulltime":"max time: undefined seconds"},"color":"solid 5px #25411A","options":[],"logic":{"color":"#677059","operator":["OR","AND"],"left":{"compare":"less than","output":"3","selectedQuestion":"How","logics":["less than","equal to","greater than","contains"],"selectedError":false,"compareError":false,"outputError":false,"anyError":false},"right":{"compare":"less than","output":"2","selectedQuestion":"How","logics":["less than","equal to","greater than","contains"],"selectedError":false,"compareError":false,"outputError":false,"anyError":false},"compoundError":false, "opSelected":"OR"},"showmodal":false,"showmodaltime":false,"showmodalbank":false,"showmodalif":false,"showmodalfor":false,"showmodalslider":false}],"questionNumber":1,"visible":true}]
+    if (form_data)
+    {
+      var sections = form_data;
+
+      var mappedSections = ko.utils.arrayMap(sections, function(section)
+      {
+       // before we map the questions we have to go through and look for
+       // a for loop attrib and add to the questions
+       var len = section.questions.length;
+
+       for (var i = 0; i < len; i ++)
+        {
+           if (section.questions[i].forloop)
+           {
+               for (var j = 0; j < section.questions[i].forloop; j++)
+               {
+                   var question = {};
+                   jQuery.extend(question, section.questions[i]);
+                   question.id = section.questions[i].pre + j;
+                   section.questions.splice(i + j, 1, question);
+               }
+
+           }
+        }
+        var mappedQuestions = ko.utils.arrayMap(section.questions, function(question)
+          {
+           var mappedLogics = getLogics(question.logic);
+           return new Question(question.id, question.type, question.section, question.text, question.label, question.options, question.value, question.forloop, question.caption, mappedLogics);
+          });
+       return new Section(section.id, section.type, section.order, section.page, section.visible, mappedQuestions);
+        });
+      viewModel.sections(mappedSections);
+    }
+    else
+    {
+      var base = new Section();
+      viewModel.sections.push(base);
+    }
+
+      ko.applyBindings(viewModel);
 
 //    var jsonData = ko.toJSON(viewModel.sections());
 
